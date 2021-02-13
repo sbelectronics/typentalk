@@ -7,11 +7,11 @@ def emit(ruleSet, buf):
     if emitHeaders:
         print ""
         print "#define %sLen %d" % (ruleSet, len(buf))
-        print "extern unsigned char %s[%sLen];" % (ruleSet, ruleSet)
+        print "extern const uint8_t %s[%sLen] RULEMEM;" % (ruleSet, ruleSet)
         return
 
     print ""
-    print "unsigned char %s[%sLen] = {" % (ruleSet, ruleSet)
+    print "const uint8_t %s[%sLen] RULEMEM = {" % (ruleSet, ruleSet)
     print "   ",
     count = 0
     for v in buf:
@@ -28,10 +28,17 @@ def emit(ruleSet, buf):
 if emitHeaders:
     print "#ifndef __ruleset_h__"
     print "#define __ruleset_h__"
+    print '#include "tt_types.h"'
 else:
     print '#include "ruleset.h"'
 
-lines=open("typetalk.asm").readlines()
+if len(sys.argv)<2:
+    print >> sys.stderr, "syntax: convert_rules.py <asm-file-name>"
+    sys.exit(-1)
+    
+fn = sys.argv[1]
+    
+lines=open(fn).readlines()
 lines = [x.strip() for x in lines]
 ruleSet = None
 buf = []

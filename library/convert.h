@@ -2,7 +2,7 @@
 #define __CONVERTER_H__
 
 #include <stdarg.h>
-#include "types.h"
+#include "tt_types.h"
 
 #define STATE_INITIAL 0
 #define STATE_SPACE 1
@@ -18,6 +18,9 @@ class Converter {
 	    Converter(void);
 
 		virtual void emitPhoneme(uint8_t phoneme);
+        virtual void DebugPrintf(const char *format, ...);
+        virtual void DebugRule(const char *txt, const uint8_t *myRulePtr, uint8_t *graPtr);
+
 		void convert(uint8_t *, uint8_t);
 		void convertString(char *word);
 
@@ -29,24 +32,21 @@ class Converter {
 		uint8_t graLen;
 		uint8_t graPhoneme;
 		uint8_t *graMatchPtr;
-		uint8_t *rulePtr;
-		uint8_t *rightRulePtr;
+		const uint8_t *rulePtr;
+		const uint8_t *rightRulePtr;
 		uint8_t *rightGraphemePtr;
 		uint8_t *nextRightGraphemePtr;
-		uint8_t *matchPtr;
+		const uint8_t *matchPtr;
 		uint8_t context;
 
 		bool debug;
 
 	    uint8_t wordToGraphenes(char *word, uint8_t *graphenes);
 
-		uint8_t *getRuleSet(uint8_t grapheme);
+		const uint8_t *getRuleSet(uint8_t grapheme);
 
-        void DebugPrintf(const char *format, ...);
-        void DebugRule(const char *txt, uint8_t *myRulePtr, uint8_t *graPtr);
-
-		void LocateRightContext(uint8_t *);
-		uint8_t *skipRule(uint8_t *myRulePtr);
+		void LocateRightContext(const uint8_t *);
+		const uint8_t *skipRule(const uint8_t *myRulePtr);
 		bool matchRuleSet();
 		bool matchRule(uint8_t);
 		
@@ -65,14 +65,6 @@ class Converter {
 		bool matchNumeric();
 };
 
-class StringOutputConverter: public Converter
-{
-	public:
-        char outputBuf[MAX_GRAPHENEBUF*4];
-
-	    StringOutputConverter(void);
-
-		virtual void emitPhoneme(uint8_t phoneme);
-};
+extern const char *phonemes[64];
 
 #endif

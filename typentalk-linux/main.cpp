@@ -1,4 +1,4 @@
-#include "convert.h"
+#include "../library/convert_stdio.h"
 
 /* rules for Z
    DA BF, DA         - Z E1 AY Y
@@ -22,7 +22,7 @@
 
 int main()
 {
-  Converter *c = new Converter();
+  StdioConverter *c = new StdioConverter();
 
   //c->convertString((char*) "late");
 

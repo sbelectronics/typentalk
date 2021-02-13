@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "convert.h"
+#include "../library/convert_stdio_string.h"
 
 /* examples
  * MUSIC - CLbvwRKIY - PA0 - M - Y1 - IU - U1 - S - I1 - I3 - K
@@ -11,7 +11,7 @@ int result = 0;
 
 void test(const char *word, const char *phonemes)
 {
-  StringOutputConverter *sc = new StringOutputConverter();
+  StringStdioConverter *sc = new StringStdioConverter();
 
   sc->convertString( (char*) word);
   
@@ -32,7 +32,7 @@ int main()
   execute_test_cases();
 
   if (result > 0) {
-    fprintf(stderr, "*** %d errors ***\n");
+    fprintf(stderr, "*** %d errors ***\n", result);
   }
 
   return result;

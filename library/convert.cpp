@@ -22,7 +22,7 @@
  *       7F emit stop
  */
 
-unsigned char *ruleSets[] = {
+const unsigned char *ruleSets[] = {
 	ruleSetY,	// grapheme $00
 	ruleSetE,	// grapheme $01
 	ruleSetI,	// grapheme $02
@@ -160,11 +160,6 @@ Converter::Converter()
     debug = false; //true;
 }
 
-void Converter::emitPhoneme(uint8_t phoneme)
-{
-    fprintf(stdout, "%s ", phonemes[phoneme & 0x3F]);
-}
-
 // Convert a word into a list of graphenes.
 uint8_t Converter::wordToGraphenes(char *word, uint8_t *graphenes)
 {
@@ -202,7 +197,7 @@ uint8_t Converter::wordToGraphenes(char *word, uint8_t *graphenes)
     return count;
 }
 
-uint8_t *Converter::getRuleSet(uint8_t grapheme)
+const uint8_t *Converter::getRuleSet(uint8_t grapheme)
 {
 	if (grapheme>0x1A) {
 		grapheme = 0x1A;
@@ -225,8 +220,8 @@ void Converter::convert(uint8_t *graphemeStart, uint8_t count)
     graPtr = graphemeStart;
 
 	while (graCount > 0) {
-	    uint8_t *ruleSet;
-		uint8_t *nextRule;
+	    const uint8_t *ruleSet;
+		const uint8_t *nextRule;
 
         DebugPrintf("----------\n");
 		ruleSet = getRuleSet(*graPtr);
@@ -252,65 +247,7 @@ void Converter::convert(uint8_t *graphemeStart, uint8_t count)
 	}
 }
 
-void Converter::DebugPrintf(const char *format, ...)
-{
-    if (!debug) {
-		return;
-	}
-
-	va_list args;
-    va_start(args, format);
-
-    vfprintf(stderr, format, args);
-
-	va_end(args);
-}
-
-void Converter::DebugRule(const char *txt, uint8_t *myRulePtr, uint8_t *graPtr)
-{
-    uint8_t *save;
-
-    if (!debug) {
-		return;
-	}	
-
-	DebugPrintf("%s", txt);
-	while ((*myRulePtr & 0x80) != 0) {
-		DebugPrintf(" %02X", *myRulePtr);
-        myRulePtr++;
-	}
-
-	save = myRulePtr;
-
-	DebugPrintf(" %02X", *myRulePtr);
-
-	// increment rule pointer
-	myRulePtr++;
-
-    // loop while b7 unset (skip phonemes)
-	while ((*myRulePtr & 0x80) == 0) {
-		DebugPrintf(" %02X", *myRulePtr);
-		myRulePtr++;
-	}
-
-    myRulePtr = save;
-	DebugPrintf(" (");
-	DebugPrintf("/%s", phonemes[*myRulePtr & 0x3F]);
-	myRulePtr++;
-	while ((*myRulePtr & 0x80) == 0) {
-		DebugPrintf("/%s", phonemes[*myRulePtr & 0x3F]);
-		myRulePtr++;
-	}
-	DebugPrintf(")");
-
-	if (graPtr) {
-		DebugPrintf(" [%02X]", *graPtr);
-	}
-
-	DebugPrintf("\n");
-}
-
-void Converter::LocateRightContext(uint8_t *myRulePtr)
+void Converter::LocateRightContext(const uint8_t *myRulePtr)
 {
     uint8_t grapheme;
 
@@ -386,7 +323,7 @@ L6D73:
 	goto L6D73;
 }
 
-uint8_t *Converter::skipRule(uint8_t *myRulePtr)
+const uint8_t *Converter::skipRule(const uint8_t *myRulePtr)
 {
     //DebugPrintf("skiprule myRulePtr=%p, *myRulePtr=%02X, *myRulePtr+1=%02X\n", myRulePtr, *myRulePtr, *(myRulePtr+1));
 
@@ -413,7 +350,7 @@ uint8_t *Converter::skipRule(uint8_t *myRulePtr)
 
 bool Converter::matchRuleSet()
 {
-    uint8_t *myRulePtr;
+    const uint8_t *myRulePtr;
 
 	DebugRule("matchRuleSet", rightRulePtr, graPtr);
 
@@ -961,17 +898,14 @@ bool Converter::matchNumeric()
 	return true;
 }
 
-StringOutputConverter::StringOutputConverter(void)
+void Converter::emitPhoneme(uint8_t phoneme)
 {
-	*outputBuf = '\0';
 }
 
-void StringOutputConverter::emitPhoneme(uint8_t phoneme)
+void Converter::DebugPrintf(const char *format, ...)
 {
-    if (*outputBuf) {
-		char space = ' ';
+}
 
-		strncat(outputBuf, &space, 1);
-	}
-	strcat(outputBuf, phonemes[phoneme & 0x3F]);
+void Converter::DebugRule(const char *txt, const uint8_t *myRulePtr, uint8_t *graPtr)
+{
 }
