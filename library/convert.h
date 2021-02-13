@@ -22,8 +22,12 @@ class Converter {
         virtual void DebugPrintf(const char *format, ...);
         virtual void DebugRule(const char *txt, const uint8_t *myRulePtr, uint8_t *graPtr);
 
+		void addPhoneme(uint8_t phoneme);
+
+		char *getWordBuf();
+
 		void convert(uint8_t *, uint8_t);
-		void convertString(char *word);
+		void convertBuffer();
 		void setModePSend(bool b);
 		void setDebug(bool b) { debug = b; }
 
@@ -45,7 +49,7 @@ class Converter {
 		bool debug;
 		bool modePSend;
 
-	    uint8_t wordToGraphenes(char *word, uint8_t *graphenes);
+		uint8_t wordToGraphenesInPlace(uint8_t *graphenes);
 
         uint8_t readRuleByte(const uint8_t *p);
 		const uint8_t *getRuleSet(uint8_t grapheme);

@@ -5,6 +5,9 @@
 #include "../library/convert_stdio.h"
 #include "../library/typetalk_stdio.h"
 
+#define INPUTBUF_SIZE 750
+char inputBuffer[INPUTBUF_SIZE];
+
 /* rules for Z
    DA BF, DA         - Z E1 AY Y
    BF, 12            - Z
@@ -31,6 +34,8 @@ int main(int argc, char **argv)
   StdioTypeTalk *t = new StdioTypeTalk(c);
   int i;
   int quiet = false;
+
+  t->initBuffer(inputBuffer, INPUTBUF_SIZE);
 
   for (i=1; i<argc; i++) {
     if (strcmp(argv[i], "--psend") == 0) {
@@ -63,7 +68,7 @@ int main(int argc, char **argv)
     if (c == EOF) {
       return 0;
     }
-    t->handleCharacter(c);
+    t->bufferCharacter(c);
   }
 
   return 0;

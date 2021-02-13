@@ -8,6 +8,9 @@
 //#include "amplifier.h"
 //#include "slave.h"
 
+#define INPUTBUF_SIZE 750
+char inputBuffer[INPUTBUF_SIZE];
+
 uint8_t LastSerialByte;
 Converter *GloConverter = NULL;
 TypeTalk *GloTypeTalk = NULL;
@@ -26,6 +29,9 @@ void SerialUpdate()
 void SerialInit() {
     GloConverter = new Converter();
     GloTypeTalk = new TypeTalk(GloConverter);
+
+    GloTypeTalk->initBuffer(inputBuffer, INPUTBUF_SIZE);
+
     LastSerialByte = 0xFF;
     Serial.begin(9600);
 }

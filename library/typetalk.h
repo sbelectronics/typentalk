@@ -12,8 +12,17 @@ class TypeTalk {
         bool ModeEcho;
         bool ModeCaps;
 
+        char *inputBuffer;
+        char *inputBufPtr;
+        int inputBufLen;
+        int inputBufSize;
+        char lastInputChar;
+
 	TypeTalk(Converter *aConverter);
 
+        void initBuffer(char *bufPtr, int bufLen);
+
+        void bufferCharacter(char ch);
         void handleCharacter(char ch);
         virtual void putCharacter(char ch);
 
@@ -24,8 +33,9 @@ class TypeTalk {
     protected:
         Converter *converter;
         uint8_t State;
-        char wordBuf[MAX_WORDBUF+1];
+        char *wordBuf;
 
+        void processLine();
         void handleEscape(char ch);
         void init();
 };

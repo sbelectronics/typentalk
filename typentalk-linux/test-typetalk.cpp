@@ -8,7 +8,10 @@
 
 int result = 0;
 
-#define MAX_LEN 4096
+#define INPUTBUF_SIZE 750
+char inputBuffer[INPUTBUF_SIZE];
+
+#define MAX_OUTBUF_LEN 4096
 int out_pipe[2];
 int saved_stdout;
 
@@ -33,30 +36,47 @@ void end_capture(char *buffer, int maxLen)
   dup2(saved_stdout, STDOUT_FILENO);  /* reconnect stdout for testing */
 }
 
+char *translate_cr(const char *input)
+{
+  char *dest = (char*) malloc(strlen(input)*4); // memory leak, who cares..
+  *dest = '\0';
+
+  while (*input) {
+    if ((*input) == '\r') {
+      strcat(dest, "<CR>");
+    } else {
+      strncat(dest, input, 1);
+    }
+    input++;
+  }
+
+  return dest;
+}
+
 void test(const char *input, const char *output)
 {
   StdioConverter *sc = new StdioConverter();
   StdioTypeTalk *tt = new StdioTypeTalk(sc);
-  char buffer[MAX_LEN+1] = {0};
+  char outputBuffer[MAX_OUTBUF_LEN+1] = {0};
+
+  tt->initBuffer(inputBuffer, INPUTBUF_SIZE);
 
   sc->SetEmit(false);
   tt->setPSend(true);
-  tt->setEcho(false);
   start_capture();
 
   for (const char *x=input; *x; x++) {
-    tt->handleCharacter(*x);
+    tt->bufferCharacter(*x);
   }
-  tt->handleCharacter(0x10); // newline
+  tt->bufferCharacter(0x0D); // newline
 
-  buffer[0] = 'C';
-  end_capture(&buffer[1], MAX_LEN);
+  end_capture(outputBuffer, MAX_OUTBUF_LEN);
 
-  if (strcmp(buffer, output) !=0) {
-    fprintf(stderr, "ERROR word='%s', converted=`%s`, correct=`%s`\n", input, buffer, output);
+  if (strcmp(outputBuffer, output) !=0) {
+    fprintf(stderr, "ERROR word='%s', converted=`%s`, correct=`%s`\n", input, translate_cr(outputBuffer), translate_cr(output));
     result++;
   } else {
-    fprintf(stderr, "OK word='%s', converted=`%s`\n", input, output);
+    fprintf(stderr, "OK word='%s', converted=`%s`\n", input, translate_cr(output));
   }
 
   delete sc;
@@ -64,9 +84,14 @@ void test(const char *input, const char *output)
 
 int main()
 {
-  test("this is a test of the emergency broadcast system", "CxIJ_~~KIRFaijB@_j~rcOxrB@Lz^ZB@M_iNkuw^Yo@_j_K_jB@L");
-  test("now is the time for all good men to come to the aid of their country", "CMUcw~~KIRxrjU@iL~]utk}X\\VV^LB@M~jvwYrcL~jvwxrFai^~rcOx@E@kYUcmMjki");
-  test("the quick brown fox jumped over the lazy dog", "CxrYmKIYNkUcwM]UcYC_^ZcqLejutOzxrXFaiRi^}\\");
+  test("this is a test of the emergency broadcast system",
+       "this is a test of the emergency broadcast system\rCxIJ_~~KIRFaijB@_j~rcOxrB@Lz^ZB@M_iNkuw^Yo@_j_K_jB@L");
+
+  test("now is the time for all good men to come to the aid of their country", 
+       "now is the time for all good men to come to the aid of their country\rCMUcw~~KIRxrjU@iL~]utk}X\\VV^LB@M~jvwYrcL~jvwxrFai^~rcOx@E@kYUcmMjki");
+
+  test("the quick brown fox jumped over the lazy dog",
+      "the quick brown fox jumped over the lazy dog\rCxrYmKIYNkUcwM]UcYC_^ZcqLejutOzxrXFaiRi^}\\");
 
   if (result > 0) {
     fprintf(stderr, "*** %d errors ***\n", result);

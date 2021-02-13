@@ -25,8 +25,14 @@
 // read a rule byte
 #ifdef ARDUINO
 #define RRB(p) (pgm_read_byte_near(p))
+#define DEBUGPRINT(fmt)
+#define DEBUGPRINTF(fmt, ...)
+#define DEBUGRULE(text, rulePtr, graPtr)
 #else
 #define RRB(p) (*(p))
+#define DEBUGPRINT(fmt) DebugPrintf(fmt)
+#define DEBUGPRINTF(fmt, args...) DebugPrintf(fmt, args)
+#define DEBUGRULE(text, rulePtr, graPtr) DebugRule(text, rulePtr, graPtr)
 #endif
 
 // tests for bit6 and bit7 of a rulePtr
@@ -179,10 +185,9 @@ void Converter::setModePSend(bool b)
 	modePSend = b;
 }
 
-// Convert a word into a list of graphenes.
-uint8_t Converter::wordToGraphenes(char *word, uint8_t *graphenes)
+char *Converter::getWordBuf()
 {
-    uint8_t count = 0;
+    uint8_t *graphenes = grapheneBuf;
 
     // sentinels at start of word
     *graphenes = 0xFF; // sentinel
@@ -190,21 +195,29 @@ uint8_t Converter::wordToGraphenes(char *word, uint8_t *graphenes)
 	*graphenes = 0x7F; // sentinel
 	graphenes++;
 
-    while (*word) {
-        if (*word < 0x40) {
+	*graphenes = 0;
+
+	return (char*) graphenes;
+}
+
+// Convert a word into a list of graphenes.
+uint8_t Converter::wordToGraphenesInPlace(uint8_t *graphenes)
+{
+    uint8_t count = 0;
+
+	while (*graphenes) {
+        if (*graphenes < 0x40) {
 			// space, punctuation, numbers, or control characters
 			// copy as-is
-			*graphenes = *word;
 			graphenes++;
 			count++;
         } else {
-            uint8_t index = tolower(*word) - 'a' + 1;
-			DebugPrintf("XXX %02X %02X %02X\n", *word, index, txt2grTable[index]);
+            uint8_t index = tolower(*graphenes) - 'a' + 1;
+			DEBUGPRINTF("XXX %02X %02X %02X\n", *graphenes, index, txt2grTable[index]);
             *graphenes = txt2grTable[index];
             graphenes++;
             count++;
         }
-        word++;
     }
 
     // two sentinels at end of word
@@ -221,16 +234,24 @@ const uint8_t *Converter::getRuleSet(uint8_t grapheme)
 	if (grapheme>0x1A) {
 		grapheme = 0x1A;
 	}
-	DebugPrintf("getRuleSet grapheme=%02X\n", grapheme);
+	DEBUGPRINTF("getRuleSet grapheme=%02X\n", grapheme);
 	return ruleSets[grapheme];
 }
 
-void Converter::convertString(char *word)
+void Converter::convertBuffer()
 {
 	uint8_t len;
 
-    len = wordToGraphenes(word, grapheneBuf);
+    len = wordToGraphenesInPlace(grapheneBuf + 2);
 	convert(grapheneBuf+2, len); // two-byte sentinel at start
+}
+
+void Converter::addPhoneme(uint8_t phoneme)
+{
+	if (modePSend) {
+		putCharacter(phoneme + 0x40);
+	}
+	emitPhoneme(phoneme);
 }
 
 void Converter::convert(uint8_t *graphemeStart, uint8_t count)
@@ -242,7 +263,7 @@ void Converter::convert(uint8_t *graphemeStart, uint8_t count)
 	    const uint8_t *ruleSet;
 		const uint8_t *nextRule;
 
-        DebugPrintf("----------\n");
+        DEBUGPRINT("----------\n");
 		ruleSet = getRuleSet(*graPtr);
         rulePtr = ruleSet;
 		LocateRightContext(rulePtr);
@@ -250,10 +271,7 @@ void Converter::convert(uint8_t *graphemeStart, uint8_t count)
 			// XXX confusion about *ruleSet passed here?
 			if (matchRuleSet()) {
 				while ((NORULEBIT7(matchPtr)) && ((RRB(matchPtr)&0x3F) != 0x3F)) {
-					if (modePSend) {
-						putCharacter(RRB(matchPtr) + 0x40);
-					}
-                    emitPhoneme(RRB(matchPtr));
+					addPhoneme(RRB(matchPtr));
 					matchPtr++;
 				}
 				graPtr += graLen;
@@ -274,7 +292,7 @@ void Converter::LocateRightContext(const uint8_t *myRulePtr)
     uint8_t grapheme;
 
 getRightContext:
-    DebugRule("getRightContext", myRulePtr, graPtr);
+    DEBUGRULE("getRightContext", myRulePtr, graPtr);
 	while (RULEBIT6(myRulePtr)) {
 		myRulePtr++;
 	}
@@ -286,12 +304,12 @@ getRightContext:
 
 	grapheme = *graPtr; // XXX suspicious
 	if (RRB(rulePtr) == 0xBF) {
-		DebugPrintf("  context sep / noMoreRules\n");
+		DEBUGPRINT("  context sep / noMoreRules\n");
 		goto L6D6A; // context separator
 	}
 
 	if (RRB(rulePtr) >= 0x9A) {
-		DebugPrintf("  numeric/symbol match rule\n");
+		DEBUGPRINT("  numeric/symbol match rule\n");
 		goto L6D73; // numeric/symbol match rule
 	}
 
@@ -304,18 +322,18 @@ getRightContext:
 L6D6A:
     rightGraphemePtr = nextRightGraphemePtr;
 	graLen ++;
-	DebugPrintf("  rightGraphemePtr=[%02X]\n", *rightGraphemePtr);
+	DEBUGPRINTF("  rightGraphemePtr=[%02X]\n", *rightGraphemePtr);
 	// XXX last instruction before return is inx, and x is rightGraphemePtr
 	return;
 
 L6D73:
 	if (NORULEBIT7(myRulePtr)) {
-		DebugPrintf("  L6D73 end of rule\n");
+		DEBUGPRINT("  L6D73 end of rule\n");
 		return;
 	}
 
 	if (RULEBIT6(myRulePtr)) {
-		DebugPrintf("  L6D73 return right context but keep\n");
+		DEBUGPRINT("  L6D73 return right context but keep\n");
 		// right context but keep, return
 		return;
 	}
@@ -324,7 +342,7 @@ L6D73:
 	grapheme = *nextRightGraphemePtr;
 	if ((grapheme & 0x80) != 0) {
 		// encountered the end sentinel on the word
-		DebugPrintf("  skiprule\n");
+		DEBUGPRINT("  skiprule\n");
 		myRulePtr = skipRule(myRulePtr);
 		goto getRightContext;
 	}
@@ -333,7 +351,7 @@ L6D73:
 
 	if (grapheme != (RRB(myRulePtr) & 0x7F)) {
 		// rule does not match
-		DebugPrintf("  skip rule no match <%02X>[%02X]\n", RRB(myRulePtr) & 0x7F, grapheme);
+		DEBUGPRINTF("  skip rule no match <%02X>[%02X]\n", RRB(myRulePtr) & 0x7F, grapheme);
 		myRulePtr = skipRule(myRulePtr);
 		goto getRightContext;
 	}
@@ -347,7 +365,7 @@ L6D73:
 
 const uint8_t *Converter::skipRule(const uint8_t *myRulePtr)
 {
-    //DebugPrintf("skiprule myRulePtr=%p, *myRulePtr=%02X, *myRulePtr+1=%02X\n", myRulePtr, *myRulePtr, *(myRulePtr+1));
+    //DEBUGPRINTF("skiprule myRulePtr=%p, *myRulePtr=%02X, *myRulePtr+1=%02X\n", myRulePtr, *myRulePtr, *(myRulePtr+1));
 
     // increment rule pointer
 	myRulePtr++;
@@ -365,7 +383,7 @@ const uint8_t *Converter::skipRule(const uint8_t *myRulePtr)
 		myRulePtr++;
 	}
 
-	//DebugPrintf("skiprule returning myRulePtr=%p, *myRulePtr=%02X, *myRulePtr+1=%02X\n", myRulePtr, *myRulePtr, *(myRulePtr+1));
+	//DEBUGPRINTF("skiprule returning myRulePtr=%p, *myRulePtr=%02X, *myRulePtr+1=%02X\n", myRulePtr, *myRulePtr, *(myRulePtr+1));
 
 	return myRulePtr;
 }
@@ -374,7 +392,7 @@ bool Converter::matchRuleSet()
 {
     const uint8_t *myRulePtr;
 
-	DebugRule("matchRuleSet", rightRulePtr, graPtr);
+	DEBUGRULE("matchRuleSet", rightRulePtr, graPtr);
 
 	graMatchPtr = graPtr;
 
@@ -383,7 +401,7 @@ bool Converter::matchRuleSet()
 	// left context
 L6DA7:
     myRulePtr--;
-	DebugRule("matchRuleSet-backup", myRulePtr, graPtr);
+	DEBUGRULE("matchRuleSet-backup", myRulePtr, graPtr);
 	if (NORULEBIT7(myRulePtr)) {
 		// end of left context; scan forwards
 		goto L6DB9;
@@ -391,34 +409,34 @@ L6DA7:
 	rulePtr = myRulePtr;
 	context = 0; // left context
 	if (!matchRule(RRB(rulePtr))) {
-		DebugPrintf("  rule does not match\n");
+		DEBUGPRINT("  rule does not match\n");
 		return false;
 	}
 	goto L6DA7;
 
 	// right context
 L6DB9:
-    DebugPrintf("  scanForward <%02X>[%02X]\n", *rightRulePtr, *rightGraphemePtr);
+    DEBUGPRINTF("  scanForward <%02X>[%02X]\n", *rightRulePtr, *rightGraphemePtr);
     graMatchPtr = rightGraphemePtr;
 	myRulePtr = rightRulePtr;
 L6DBF:
     myRulePtr++;
-	DebugRule("matchRuleSet-forward", myRulePtr, graPtr);
+	DEBUGRULE("matchRuleSet-forward", myRulePtr, graPtr);
 	if (NORULEBIT7(myRulePtr)) {
-		DebugPrintf("  no more rules\n");
+		DEBUGPRINT("  no more rules\n");
 		// no more rules, use following phonemes
 		matchPtr = myRulePtr;
         return true;
 	}
 	if (NORULEBIT6(myRulePtr)) {
-		DebugPrintf("  right context already consumed");
+		DEBUGPRINT("  right context already consumed");
 		// skip right context already consumed
 		goto L6DBF;
 	}
 	rulePtr = myRulePtr;
 	context = 1; // right context
 	if (!matchRule(RRB(myRulePtr))) {
-		DebugPrintf("  rule does not match\n");
+		DEBUGPRINT("  rule does not match\n");
 		return false;
 	}
 	// continue forward
@@ -435,23 +453,23 @@ bool Converter::matchRule(uint8_t ruleByte)
 		// right context
 		graMatchPtr = graMatchPtr+1;
 	}
-    DebugPrintf("  matchRule <%02X>[%02x] ctx=%d\n", ruleByte, *graMatchPtr, context);
+    DEBUGPRINTF("  matchRule <%02X>[%02x] ctx=%d\n", ruleByte, *graMatchPtr, context);
 
 	if ((ruleByte & 0x20) != 0) {
 		// bit5 set -> special match rule
-		DebugPrintf("    matRule-matchSpecial\n");
+		DEBUGPRINT("    matRule-matchSpecial\n");
 		return matchSpecial(ruleByte);
 	}
 
 	ruleByte = ruleByte & 0x3F; // clear bits 7 and 6
 
 	if (ruleByte <= 0x19) {
-		DebugPrintf("    matRule-exit2 %d\n", ruleByte == *graMatchPtr);
+		DEBUGPRINTF("    matRule-exit2 %d\n", ruleByte == *graMatchPtr);
 		return (ruleByte == *graMatchPtr);
 	}
 
      // numeric/symbol match
-	 DebugPrintf("    matchRule-matchsymbol <%02X>[%02X]:%d\n", ruleByte, *graMatchPtr, (ruleByte <= *graMatchPtr));
+	 DEBUGPRINTF("    matchRule-matchsymbol <%02X>[%02X]:%d\n", ruleByte, *graMatchPtr, (ruleByte <= *graMatchPtr));
 	 return (ruleByte <= *graMatchPtr);
 }
 
@@ -532,7 +550,7 @@ bool Converter::matchMultiVowel()
 	uint8_t *myGraPtr = graMatchPtr;
 	uint8_t grapheme;
 
-	DebugPrintf("    matchMultiVowel [%02X]\n", *myGraPtr);
+	DEBUGPRINTF("    matchMultiVowel [%02X]\n", *myGraPtr);
 
 again:
 	grapheme = *myGraPtr;
@@ -561,7 +579,7 @@ bool Converter::matchFrontVowel()
 {
 	uint8_t grapheme;
 
-	DebugPrintf("    matchFrontVowel [%02X]\n", *graMatchPtr);
+	DEBUGPRINTF("    matchFrontVowel [%02X]\n", *graMatchPtr);
 
 	grapheme = *graMatchPtr;
 	if ((grapheme & 0x80) != 0) {
@@ -579,7 +597,7 @@ bool Converter::matchMultiCons()
 	uint8_t *myGraPtr = graMatchPtr;
 	uint8_t grapheme;
 
-	DebugPrintf( "    matchMultiCons [%02X]\n", *graMatchPtr);
+	DEBUGPRINTF( "    matchMultiCons [%02X]\n", *graMatchPtr);
 
 again:
     grapheme = *myGraPtr;
@@ -610,7 +628,7 @@ bool Converter::matchConsonant()
 {
 	uint8_t grapheme;
 
-	DebugPrintf("    matchConsonant [%02X]\n", *graMatchPtr);
+	DEBUGPRINTF("    matchConsonant [%02X]\n", *graMatchPtr);
 
 	grapheme = *graMatchPtr;
 	if ((grapheme & 0x80) != 0) {
@@ -626,7 +644,7 @@ bool Converter::matchNonLetterStuff()
 {
     uint8_t grapheme;
 
-	DebugPrintf("    matchNonLetterStuff [%02X]\n", *graMatchPtr);
+	DEBUGPRINTF("    matchNonLetterStuff [%02X]\n", *graMatchPtr);
 
 	if (matchSuffix()) {
 		return true;
@@ -642,7 +660,7 @@ bool Converter::matchSuffix()
 	uint8_t *myGraPtr = graMatchPtr;
 	uint8_t grapheme;
 
-	DebugPrintf("    matchSuffix [%02X]\n", *graMatchPtr);
+	DEBUGPRINTF("    matchSuffix [%02X]\n", *graMatchPtr);
 
     grapheme = *myGraPtr;
 	if ((grapheme & 0x80) != 0) {
@@ -734,7 +752,7 @@ bool Converter::matchSibilant()
 	uint8_t *myGraPtr = graMatchPtr;
 	uint8_t grapheme;
 
-	DebugPrintf("    matchSibilant [%02X]\n", *graMatchPtr);
+	DEBUGPRINTF("    matchSibilant [%02X]\n", *graMatchPtr);
 
     grapheme = *myGraPtr;
 	if ((grapheme & 0x80) != 0) {
@@ -791,7 +809,7 @@ L6F13:
 
 bool Converter::matchZeroCons()
 {
-    DebugPrintf("    matchZeroCons [%02X]\n", *graMatchPtr);
+    DEBUGPRINTF("    matchZeroCons [%02X]\n", *graMatchPtr);
 
 	if (matchMultiCons()) {
 		return true;
@@ -810,7 +828,7 @@ bool Converter::matchVoicedCons()
 	uint8_t *myGraPtr = graMatchPtr;
 	uint8_t grapheme;
 
-	DebugPrintf("    matchVoicedCons [%02X]\n", *graMatchPtr);
+	DEBUGPRINTF("    matchVoicedCons [%02X]\n", *graMatchPtr);
 
     grapheme = *myGraPtr;
 	if ((grapheme & 0x80) != 0) {
@@ -825,7 +843,7 @@ bool Converter::matchLongUCons()
 	uint8_t *myGraPtr = graMatchPtr;
 	uint8_t grapheme;
 
-	DebugPrintf("    matchLongUCons [%02X]\n", *graMatchPtr);
+	DEBUGPRINTF("    matchLongUCons [%02X]\n", *graMatchPtr);
 
     grapheme = *myGraPtr;
 	if ((grapheme & 0x80) != 0) {
@@ -884,7 +902,7 @@ bool Converter::matchNonLetterS()
 	uint8_t *myGraPtr = graMatchPtr;
 	uint8_t grapheme;
 
-	DebugPrintf("    matchNonLetterS [%02X]\n", *graMatchPtr);
+	DEBUGPRINTF("    matchNonLetterS [%02X]\n", *graMatchPtr);
 
     grapheme = *myGraPtr;
 	if (grapheme > 0x19) { // non-letter
@@ -908,7 +926,7 @@ bool Converter::matchNumeric()
 	uint8_t *myGraPtr = graMatchPtr;
 	uint8_t grapheme;
 
-	DebugPrintf("    matchNumeric [%02X]\n", *graMatchPtr);
+	DEBUGPRINTF("    matchNumeric [%02X]\n", *graMatchPtr);
 
     grapheme = *myGraPtr;
 	if (grapheme < '0') {

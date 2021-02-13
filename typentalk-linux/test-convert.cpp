@@ -13,7 +13,8 @@ void test(const char *word, const char *phonemes)
 {
   StringStdioConverter *sc = new StringStdioConverter();
 
-  sc->convertString( (char*) word);
+  strcpy(sc->getWordBuf(), (char*) word);
+  sc->convertBuffer();
   
   if (strcmp(sc->outputBuf, phonemes) !=0) {
     fprintf(stderr, "ERROR word='%s', converted=`%s`, correct=`%s`\n", word, sc->outputBuf, phonemes);

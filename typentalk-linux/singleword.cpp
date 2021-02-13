@@ -30,7 +30,8 @@ int main(int argc, char **argv)
   StdioConverter *c = new StdioConverter();
 
   c->setDebug(true);
-  c->convertString((char*) "emergency");
+  strcpy(c->getWordBuf(), (char*) "emergency");
+  c->convertBuffer();
 
   return 0;
 }

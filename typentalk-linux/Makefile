@@ -8,11 +8,13 @@ typetalk: ${TTLIBSRC} main.cpp rawmode.cpp Makefile
 singleword: ${TTLIBSRC} singleword.cpp Makefile
 	g++ ${TTLIBSRC} singleword.cpp  -g -o singleword
 
-test: ${TTLIBSRC} test.cpp testcases.inc  Makefile
-	g++ ${TTLIBSRC} test.cpp -g -o test-convert
+test: test1 test2
+
+test1: ${TTLIBSRC} test-convert.cpp testcases.inc  Makefile
+	g++ ${TTLIBSRC} test-convert.cpp -g -o test-convert
 	./test-convert
 
-test2: ${TTLIBSRC} test.cpp testcases.inc  Makefile
+test2: ${TTLIBSRC} test-typetalk.cpp  Makefile
 	g++ ${TTLIBSRC} test-typetalk.cpp -g -o test-typetalk
 	./test-typetalk
 

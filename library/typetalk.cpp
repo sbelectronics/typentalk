@@ -8,6 +8,7 @@
 TypeTalk::TypeTalk(Converter *aConverter)
 {
     converter = aConverter;
+	inputBuffer = NULL;
     init();
 }
 
@@ -45,10 +46,60 @@ void TypeTalk::putCharacter(char ch)
 {
 }
 
-void TypeTalk::handleCharacter(char ch) {
+void TypeTalk::bufferCharacter(char ch)
+{   
 	if (ModeEcho) {
 		putCharacter(ch);
 	}
+
+	if (inputBuffer == NULL) {
+		// buffering not supported
+		handleCharacter(ch);
+		return;
+	}
+
+	if ((ch == 0x0A) && (lastInputChar == 0x0D)) {
+		// ignore the LF that follows a CR
+		return;
+	}
+
+	lastInputChar = ch;
+
+	if ((ch == 0x0D) || (ch == 0x0A)) {
+		processLine();
+		return;
+	}
+
+	// add character to buffer
+	*inputBufPtr = ch;
+	inputBufPtr++;
+	inputBufLen++;
+
+	// buffer full ?
+	if (inputBufLen >= inputBufSize) {
+		processLine();
+	}
+}
+
+void TypeTalk::processLine() {
+	char *x;
+
+    converter->setModePSend(ModePSend);
+	converter->addPhoneme(0x03);
+
+    x=inputBuffer;
+	while (inputBufLen > 0) {
+		handleCharacter(*x);
+		x++;
+		inputBufLen--;
+	}
+	handleCharacter(0x0D); // end of line
+
+	inputBufPtr = inputBuffer;
+	inputBufLen = 0;
+}
+
+void TypeTalk::handleCharacter(char ch) {
   restart:
 	switch (State) {
 		case STATE_INITIAL:
@@ -97,7 +148,7 @@ void TypeTalk::handleCharacter(char ch) {
 				strncat(wordBuf, &ch, 1);
 			} else {
 				converter->setModePSend(ModePSend);
-				converter->convertString(wordBuf);
+				converter->convertBuffer();
 				*wordBuf = '\0';
 				State = STATE_INITIAL;
 				goto restart;
@@ -106,7 +157,7 @@ void TypeTalk::handleCharacter(char ch) {
 
 		case STATE_NONLETTER:
 		    if (isalpha(ch) || isspace(ch) || (ch=='~')) {
-				converter->convertString(wordBuf);
+				converter->convertBuffer();
 				*wordBuf = '\0';
 				State = STATE_INITIAL;
 				goto restart;
@@ -122,5 +173,14 @@ void TypeTalk::init()
 	ModePSend = false;
 	ModeEcho = true;
     ModeCaps = false;
-	*wordBuf = '\0';
+	wordBuf = converter->getWordBuf();
+	lastInputChar = '\0';
+}
+
+void TypeTalk::initBuffer(char *bufPtr, int bufLen)
+{
+	inputBuffer = bufPtr;
+	inputBufPtr = inputBuffer;
+	inputBufLen = 0;
+	inputBufSize = bufLen;
 }
