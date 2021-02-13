@@ -656,9 +656,9 @@ bool Converter::matchSuffix()
 	myGraPtr++;
 	grapheme = *myGraPtr;
 	if (grapheme == 0x12) { // R
-	    goto L6EC7;
+	    goto L6EC0;
 	}
-	if (grapheme > 0x19) { // non-letter
+	if (grapheme > 0x19) { // non-letter; word ends in "E"
         graMatchPtr = myGraPtr;
 		return true;    
 	}
