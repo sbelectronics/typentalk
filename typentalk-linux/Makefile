@@ -5,9 +5,16 @@ all: typetalk
 typetalk: ${TTLIBSRC} main.cpp rawmode.cpp Makefile
 	g++ ${TTLIBSRC} main.cpp rawmode.cpp  -g -o typetalk
 
+singleword: ${TTLIBSRC} singleword.cpp Makefile
+	g++ ${TTLIBSRC} singleword.cpp  -g -o singleword
+
 test: ${TTLIBSRC} test.cpp testcases.inc  Makefile
-	g++ ${TTLIBSRC} test.cpp -g -o typetalk-test
-	./typetalk-test
+	g++ ${TTLIBSRC} test.cpp -g -o test-convert
+	./test-convert
+
+test2: ${TTLIBSRC} test.cpp testcases.inc  Makefile
+	g++ ${TTLIBSRC} test-typetalk.cpp -g -o test-typetalk
+	./test-typetalk
 
 testcases.inc: translate_translations.py translations.txt
 	python ./translate_translations.py < translations.txt > testcases.inc

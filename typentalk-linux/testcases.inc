@@ -52,8 +52,11 @@ void execute_test_cases() {
   test(",alpha", "PA1 PA1 AW L F UH2 UH3");
   test("advertise", "AE1 EH3 D V ER T AH1 EH3 AY Z");
   test("aether", "AE1 EH3 EH1 EH3 THV ER");
+  test("aid", "A1 AY Y D");
+  test("all", "AW L");
   test("aloud", "UH1 L AH1 UH3 W D");
   test("anemone", "AE1 EH3 N EH1 EH3 M O1 U1 N");
+  test("aptly", "AE1 EH3 P T L Y");
   test("awesome", "AW EH1 EH3 S UH1 UH3 M");
   test("ball", "B AW L");
   test("balloon", "B AW L U1 U1 N");
@@ -61,6 +64,7 @@ void execute_test_cases() {
   test("base", "B A1 AY Y S");
   test("brekfast", "B R EH1 EH3 K F AE1 EH3 S T");
   test("bring", "B R I1 I3 NG");
+  test("broadcast", "B R O1 U1 D K AE1 EH3 S T");
   test("butiful", "PA1 PA1 B Y1 IU U1 T I1 I3 F OO1 L");
   test("cat", "K AE1 EH3 T");
   test("certin", "S ER T I1 I3 N");
@@ -68,6 +72,8 @@ void execute_test_cases() {
   test("computer", "K AH1 UH3 M P OO1 OO1 T ER");
   test("church", "T CH ER T CH");
   test("coffee", "K AW F E1 Y");
+  test("come", "K UH1 UH3 M");
+  test("country", "K AH1 UH3 W N T R Y");
   test("day", "D A1 I3 AY");
   test("delete", "D Y L I3 T");
   test("doctor", "D AH1 UH3 K T ER");
@@ -75,10 +81,13 @@ void execute_test_cases() {
   test("educated", "EH1 EH3 D IU U1 K A1 I3 AY T I3 D");
   test("education", "EH1 EH3 D IU U1 K A1 Y SH UH3 N");
   test("either", "E1 THV ER");
+  test("electroanalysis", "EH1 EH3 L EH1 EH3 K T R O1 U1 N AE1 EH3 L I1 Z I1 I3 S");
+  test("emergency", "EH1 EH3 M ER D J EH1 EH3 N S Y");
   test("every", "EH1 V ER Y");
   test("example", "EH1 EH3 K PA0 S AE1 EH3 M P UH3 L");
   test("exit", "EH1 EH3 K PA0 S I1 I3 T");
   test("far", "F AH1 UH3 R");
+  test("flywheel", "F L I1 W E1 Y L");
   test("for", "PA1 F O1 O2 R");
   test("fortran", "PA1 F O1 O2 R T R AE1 EH3 N");
   test("gave", "G A1 AY Y V");
@@ -113,8 +122,13 @@ void execute_test_cases() {
   test("lonely", "L O1 U1 N L Y");
   test("lose", "L O1 U1 Z");
   test("lost", "L AW S T");
+  test("lymph", "L I1 M F");
   test("magazine", "M AE1 EH3 G AE1 EH3 Z AH1 EH3 Y N");
   test("medication", "M EH1 EH3 D I1 I3 K A1 Y SH UH3 N");
+  test("men", "M EH1 EH3 N");
+  test("mingle", "M I1 I3 NG G UH3 L");
+  test("mingles", "M I1 I3 NG G UH3 L Z");
+  test("mingling", "M I1 I3 NG G UH3 L I1 I3 NG");
   test("mischievious", "M I1 I3 S T CH AY Y V I1 I3 UH3 S");
   test("mistake", "M I1 I3 S T A1 I3 AY K");
   test("mosheenery", "M AH1 UH3 SH E1 Y N ER Y");
@@ -124,11 +138,14 @@ void execute_test_cases() {
   test("next", "N EH1 EH3 K PA0 S T");
   test("north", "N O1 O2 R TH");
   test("nose", "N O1 U1 Z");
+  test("now", "N AH1 UH3 U1");
+  test("of", "PA1 UH1 UH3 V");
   test("open", "O1 P EH1 EH3 N");
   test("ouija", "AH1 UH3 W I1 I3 D J UH2 UH3");
   test("out", "AH1 UH3 W T");
   test("pause", "P AW Z");
   test("playground", "P L A1 I3 AY G R AH1 UH3 W N D");
+  test("polygraph", "P AH1 UH3 L I1 G R AE1 EH3 F");
   test("pronunsiation", "P R UH1 N UH3 UH2 N S I1 I3 A1 Y SH UH3 N");
   test("prowceejers", "P R O1 U1 S E1 Y D J ER Z");
   test("pedal", "P EH1 EH3 D UH3 L");
@@ -144,6 +161,8 @@ void execute_test_cases() {
   test("scott", "S K AH1 UH3 T");
   test("separate", "S EH1 EH3 P EH3 EH3 ER A1 I3 AY T");
   test("simple", "S I1 I3 M P UH3 L");
+  test("sing", "S I1 I3 NG");
+  test("sings", "S I1 I3 NG Z");
   test("some", "S UH1 UH3 M");
   test("south", "S UH3 AH2 U1 TH");
   test("speed", "S P E1 Y D");
@@ -156,6 +175,8 @@ void execute_test_cases() {
   test("temple", "T EH1 EH3 M P UH3 L");
   test("tenth", "T EH1 EH3 N TH");
   test("test", "T EH1 EH3 S T");
+  test("the", "THV UH1");
+  test("their", "THV EH3 A2 EH3 R");
   test("thing", "TH I1 I3 NG");
   test("things", "TH I1 I3 NG Z");
   test("thread", "TH R EH1 EH3 D");
@@ -180,6 +201,7 @@ void execute_test_cases() {
   test("venison", "V EH1 EH3 N I1 I3 Z UH3 N");
   test("very", "V EH1 R Y");
   test("votrax", "V O2 O2 T R AE1 EH3 K PA0 S");
+  test("walked", "W AW K T");
   test("who", "H IU U1 U1");
   test("xerxes", "K PA0 S ER K PA0 S I3 Z");
   test("xilophone", "K PA0 S I1 I3 L AH1 UH3 F O1 U1 N");

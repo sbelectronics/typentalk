@@ -25,6 +25,7 @@ class Converter {
 		void convert(uint8_t *, uint8_t);
 		void convertString(char *word);
 		void setModePSend(bool b);
+		void setDebug(bool b) { debug = b; }
 
 	protected:
 		uint8_t grapheneBuf[MAX_GRAPHENEBUF+1];

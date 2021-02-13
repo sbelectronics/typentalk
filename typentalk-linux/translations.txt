@@ -51,8 +51,11 @@ alpha, C}X]qc~~
 ,alpha C~~}X]qc
 advertise Co@^OzjU@aR
 aether Co@B@xz
+aid CFai^
+all C}X
 aloud CrXUcm^
 anemone Co@MB@LuwM
+aptly Co@ejXi
 awesome C}B@_rcL
 ball CN}X
 balloon CN}XwwM
@@ -60,6 +63,7 @@ baker CNFaiYz
 base CNFai_
 brekfast CNkB@Y]o@_j
 bring CNkKIT
+broadcast CNkuw^Yo@_j
 butiful C~~NbvwjKI]VX
 cat CYo@j
 certin C_zjKIM
@@ -67,6 +71,8 @@ chomp CjPUcLe
 computer CYUcLeVVjz
 church CjPzjP
 coffee CY}]|i
+come CYrcL
+country CYUcmMjki
 day C^FIa
 delete C^iXIj
 doctor C^UcYjz
@@ -74,10 +80,13 @@ dog C^}\
 educated CB@^vwYFIajI^
 education CB@^vwYFiQcM
 either C|xz
+electroanalysis CB@XB@YjkuwMo@XKRKI_
+emergency CB@Lz^ZB@M_i
 every CBOzi
 example CB@YC_o@LecX
 exit CB@YC_KIj
 far C]Uck
+flywheel C]XKm|iX
 for C~]utk
 fortran C~]utkjko@M
 gave C\FaiO
@@ -112,8 +121,13 @@ loose CXwwR
 lonely CXuwMXi
 lose CXuwR
 lost CX}_j
+lymph CXKL]
 magazine CLo@\o@RU@iM
 medication CLB@^KIYFiQcM
+men CLB@M
+mingle CLKIT\cX
+mingles CLKIT\cXR
+mingling CLKIT\cXKIT
 mischievious CLKI_jPaiOKIc_
 mistake CLKI_jFIaY
 mosheenery CLUcQ|iMzi
@@ -123,11 +137,14 @@ nebraska CMB@Nko@_Yqc
 next CMB@YC_j
 north CMutky
 nose CMuwR
+now CMUcw
+of C~rcO
 open CueB@M
 ouija CUcmKI^Zqc
 out CUcmj
 pause Ce}R
 playground CeXFIa\kUcmM^
+polygraph CeUcXK\ko@]
 pronunsiation CekrMcqM_KIFiQcM
 prowceejers Cekuw_|i^ZzR
 pedal CeB@^cX
@@ -143,6 +160,8 @@ rural CkzcX
 scott C_YUcj
 separate C_B@e@@zFIaj
 simple C_KILecX
+sing C_KIT
+sings C_KITR
 some C_rcL
 south C_cHwy
 speed C_e|i^
@@ -155,6 +174,8 @@ system C_K_jB@L
 temple CjB@LecX
 tenth CjB@My
 test CjB@_j
+the Cxr
+their Cx@E@k
 thing CyKIT
 things CyKITR
 thread CykB@^
@@ -179,6 +200,7 @@ vary CO@@zi
 venison COB@MKIRcM
 very COBki
 votrax COttjko@YC_
+walked Cm}Yj
 who C[vww
 xerxes CYC_zYC_IR
 xilophone CYC_KIXUc]uwM

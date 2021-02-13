@@ -73,8 +73,16 @@ for line in sys.stdin.readlines():
     line = line.strip()
     if " " not in line:
         continue
-    (english, encoded_phonemes) = line.split(" ",1)
+    if line.startswith('"'):
+        # double-quoted
+        line = line[1:]
+        (english, encoded_phonemes) = line.split('"',1)
+    else:
+        (english, encoded_phonemes) = line.split(" ",1)
+
     english = english.strip()
+    encoded_phonemes = encoded_phonemes.strip()
+
     if encoded_phonemes.startswith("C"):
         encoded_phonemes = encoded_phonemes[1:]
     encoded_phonemes = encoded_phonemes.strip()
@@ -82,4 +90,3 @@ for line in sys.stdin.readlines():
     print '  test("%s", "%s");' % (english, " ".join(decoded_phonemes))
 
 print "}"
-
