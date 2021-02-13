@@ -22,11 +22,18 @@
  *       7F emit stop
  */
 
+// read a rule byte
+#ifdef ARDUINO
+#define RRB(p) (pgm_read_byte_near(p))
+#else
+#define RRB(p) (*(p))
+#endif
+
 // tests for bit6 and bit7 of a rulePtr
-#define RULEBIT6(p) ((readRuleByte(p) & 0x40)!=0)
-#define NORULEBIT6(p) ((readRuleByte(p) & 0x40)==0)
-#define RULEBIT7(p) ((readRuleByte(p) & 0x80)!=0)
-#define NORULEBIT7(p) ((readRuleByte(p) & 0x80)==0)
+#define RULEBIT6(p) ((RRB(p) & 0x40)!=0)
+#define NORULEBIT6(p) ((RRB(p) & 0x40)==0)
+#define RULEBIT7(p) ((RRB(p) & 0x80)!=0)
+#define NORULEBIT7(p) ((RRB(p) & 0x80)==0)
 
 const unsigned char *ruleSets[] = {
 	ruleSetY,	// grapheme $00
@@ -203,15 +210,6 @@ uint8_t Converter::wordToGraphenes(char *word, uint8_t *graphenes)
     return count;
 }
 
-uint8_t Converter::readRuleByte(const uint8_t *p)
-{
-#ifdef ARDUINO
-  return  pgm_read_byte_near(p);
-#else
-  return *p;
-#endif
-}
-
 const uint8_t *Converter::getRuleSet(uint8_t grapheme)
 {
 	if (grapheme>0x1A) {
@@ -245,8 +243,8 @@ void Converter::convert(uint8_t *graphemeStart, uint8_t count)
 		while (true) {
 			// XXX confusion about *ruleSet passed here?
 			if (matchRuleSet()) {
-				while ((NORULEBIT7(matchPtr)) && ((readRuleByte(matchPtr)&0x3F) != 0x3F)) {
-                    emitPhoneme(readRuleByte(matchPtr));
+				while ((NORULEBIT7(matchPtr)) && ((RRB(matchPtr)&0x3F) != 0x3F)) {
+                    emitPhoneme(RRB(matchPtr));
 					matchPtr++;
 				}
 				graPtr += graLen;
@@ -278,12 +276,12 @@ getRightContext:
 	nextRightGraphemePtr = graPtr;
 
 	grapheme = *graPtr; // XXX suspicious
-	if (readRuleByte(rulePtr) == 0xBF) {
+	if (RRB(rulePtr) == 0xBF) {
 		DebugPrintf("  context sep / noMoreRules\n");
 		goto L6D6A; // context separator
 	}
 
-	if (readRuleByte(rulePtr) >= 0x9A) {
+	if (RRB(rulePtr) >= 0x9A) {
 		DebugPrintf("  numeric/symbol match rule\n");
 		goto L6D73; // numeric/symbol match rule
 	}
@@ -324,9 +322,9 @@ L6D73:
 
 	// note: aslb followed by bs lsrb strips the top bit
 
-	if (grapheme != (readRuleByte(myRulePtr) & 0x7F)) {
+	if (grapheme != (RRB(myRulePtr) & 0x7F)) {
 		// rule does not match
-		DebugPrintf("  skip rule no match <%02X>[%02X]\n", readRuleByte(myRulePtr) & 0x7F, grapheme);
+		DebugPrintf("  skip rule no match <%02X>[%02X]\n", RRB(myRulePtr) & 0x7F, grapheme);
 		myRulePtr = skipRule(myRulePtr);
 		goto getRightContext;
 	}
@@ -383,7 +381,7 @@ L6DA7:
 	}
 	rulePtr = myRulePtr;
 	context = 0; // left context
-	if (!matchRule(readRuleByte(rulePtr))) {
+	if (!matchRule(RRB(rulePtr))) {
 		DebugPrintf("  rule does not match\n");
 		return false;
 	}
@@ -410,7 +408,7 @@ L6DBF:
 	}
 	rulePtr = myRulePtr;
 	context = 1; // right context
-	if (!matchRule(readRuleByte(myRulePtr))) {
+	if (!matchRule(RRB(myRulePtr))) {
 		DebugPrintf("  rule does not match\n");
 		return false;
 	}

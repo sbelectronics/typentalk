@@ -22,4 +22,5 @@ void loop()
     tLoopTop = micros();
 
     SpeechUpdate();
+    SerialUpdate();
 }
