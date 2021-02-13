@@ -41,7 +41,14 @@ void TypeTalk::handleEscape(char ch)
     }
 }
 
+void TypeTalk::putCharacter(char ch)
+{
+}
+
 void TypeTalk::handleCharacter(char ch) {
+	if (ModeEcho) {
+		putCharacter(ch);
+	}
   restart:
 	switch (State) {
 		case STATE_INITIAL:
@@ -89,6 +96,7 @@ void TypeTalk::handleCharacter(char ch) {
 			if (isalpha(ch)) {
 				strncat(wordBuf, &ch, 1);
 			} else {
+				converter->setModePSend(ModePSend);
 				converter->convertString(wordBuf);
 				*wordBuf = '\0';
 				State = STATE_INITIAL;

@@ -1,4 +1,9 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "rawmode.h"
 #include "../library/convert_stdio.h"
+#include "../library/typetalk_stdio.h"
 
 /* rules for Z
    DA BF, DA         - Z E1 AY Y
@@ -20,13 +25,46 @@
  */
 
 
-int main()
+int main(int argc, char **argv)
 {
   StdioConverter *c = new StdioConverter();
+  StdioTypeTalk *t = new StdioTypeTalk(c);
+  int i;
+  int quiet = false;
 
-  //c->convertString((char*) "late");
+  for (i=1; i<argc; i++) {
+    if (strcmp(argv[i], "--psend") == 0) {
+      t->setPSend(true);
+    } else if (strcmp(argv[i], "--noecho") == 0) {
+      t->setEcho(false);
+    } else if (strcmp(argv[i], "--caps") == 0) {
+      t->setCaps(true);
+    } else if (strcmp(argv[i], "--noemit") == 0) {
+      c->SetEmit(false);
+    } else if (strcmp(argv[i], "-q") == 0) {
+      quiet = true;
+    } else {
+      fprintf(stderr, "unknown argument %s\n", argv[i]);
+      exit(-1);
+    }
+  }
 
-  c->convertString((char*) "advertise");
+  if (!quiet) {
+    fprintf(stderr, "PSend: %s\n", t->ModePSend ? "true": "false");
+    fprintf(stderr, "Echo: %s\n", t->ModeEcho ? "true": "false");
+    fprintf(stderr, "Caps: %s\n", t->ModeCaps ? "true": "false");
+    fprintf(stderr, "Emit: %s\n", c->ModeEmit ? "true": "false");
+    fprintf(stderr, "This program will not exit unless it gets an EOF. You may have to kill it.\n");
+  }
+  GoRawMode();
+
+  while (true) {
+    char c = getc(stdin);
+    if (c == EOF) {
+      return 0;
+    }
+    t->handleCharacter(c);
+  }
 
   return 0;
 }

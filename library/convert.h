@@ -18,11 +18,13 @@ class Converter {
 	    Converter(void);
 
 		virtual void emitPhoneme(uint8_t phoneme);
+		virtual void putCharacter(char ch);
         virtual void DebugPrintf(const char *format, ...);
         virtual void DebugRule(const char *txt, const uint8_t *myRulePtr, uint8_t *graPtr);
 
 		void convert(uint8_t *, uint8_t);
 		void convertString(char *word);
+		void setModePSend(bool b);
 
 	protected:
 		uint8_t grapheneBuf[MAX_GRAPHENEBUF+1];
@@ -40,6 +42,7 @@ class Converter {
 		uint8_t context;
 
 		bool debug;
+		bool modePSend;
 
 	    uint8_t wordToGraphenes(char *word, uint8_t *graphenes);
 

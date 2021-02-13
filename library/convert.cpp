@@ -171,6 +171,12 @@ const char *phonemes[64] = {
 Converter::Converter()
 {
     debug = false; //true;
+	modePSend = false;
+}
+
+void Converter::setModePSend(bool b)
+{
+	modePSend = b;
 }
 
 // Convert a word into a list of graphenes.
@@ -244,6 +250,9 @@ void Converter::convert(uint8_t *graphemeStart, uint8_t count)
 			// XXX confusion about *ruleSet passed here?
 			if (matchRuleSet()) {
 				while ((NORULEBIT7(matchPtr)) && ((RRB(matchPtr)&0x3F) != 0x3F)) {
+					if (modePSend) {
+						putCharacter(RRB(matchPtr) + 0x40);
+					}
                     emitPhoneme(RRB(matchPtr));
 					matchPtr++;
 				}
@@ -912,6 +921,10 @@ bool Converter::matchNumeric()
 }
 
 void Converter::emitPhoneme(uint8_t phoneme)
+{
+}
+
+void Converter::putCharacter(char ch)
 {
 }
 

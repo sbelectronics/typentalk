@@ -3,10 +3,21 @@
 #include <stdio.h>
 #include "convert_stdio.h"
 
+void StdioConverter::SetEmit(bool b)
+{
+	ModeEmit = b;
+}
 
 void StdioConverter::emitPhoneme(uint8_t phoneme)
 {
-    fprintf(stdout, "%s ", phonemes[phoneme & 0x3F]);
+	if (ModeEmit) {
+        fprintf(stdout, "<%s> ", phonemes[phoneme & 0x3F]);
+	}
+}
+
+void StdioConverter::putCharacter(char ch)
+{
+	putchar(ch);
 }
 
 void StdioConverter::DebugPrintf(const char *format, ...)
