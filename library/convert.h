@@ -43,6 +43,7 @@ class Converter {
 
 	    uint8_t wordToGraphenes(char *word, uint8_t *graphenes);
 
+        uint8_t readRuleByte(const uint8_t *p);
 		const uint8_t *getRuleSet(uint8_t grapheme);
 
 		void LocateRightContext(const uint8_t *);

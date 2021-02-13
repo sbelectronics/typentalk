@@ -12,5 +12,3 @@ test: ${TTLIBSRC} test.cpp testcases.inc  Makefile
 testcases.inc: translate_translations.py translations.txt
 	python ./translate_translations.py < translations.txt > testcases.inc
 
-clean:
-	rm ruleset.cpp ruleset.h

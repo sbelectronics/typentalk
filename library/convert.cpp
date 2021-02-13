@@ -22,6 +22,12 @@
  *       7F emit stop
  */
 
+// tests for bit6 and bit7 of a rulePtr
+#define RULEBIT6(p) ((readRuleByte(p) & 0x40)!=0)
+#define NORULEBIT6(p) ((readRuleByte(p) & 0x40)==0)
+#define RULEBIT7(p) ((readRuleByte(p) & 0x80)!=0)
+#define NORULEBIT7(p) ((readRuleByte(p) & 0x80)==0)
+
 const unsigned char *ruleSets[] = {
 	ruleSetY,	// grapheme $00
 	ruleSetE,	// grapheme $01
@@ -197,6 +203,15 @@ uint8_t Converter::wordToGraphenes(char *word, uint8_t *graphenes)
     return count;
 }
 
+uint8_t Converter::readRuleByte(const uint8_t *p)
+{
+#ifdef ARDUINO
+  return  pgm_read_byte_near(p);
+#else
+  return *p;
+#endif
+}
+
 const uint8_t *Converter::getRuleSet(uint8_t grapheme)
 {
 	if (grapheme>0x1A) {
@@ -230,8 +245,8 @@ void Converter::convert(uint8_t *graphemeStart, uint8_t count)
 		while (true) {
 			// XXX confusion about *ruleSet passed here?
 			if (matchRuleSet()) {
-				while (((*matchPtr & 0x80) == 0) && ((*matchPtr&0x3F) != 0x3F)) {
-                    emitPhoneme(*matchPtr);
+				while ((NORULEBIT7(matchPtr)) && ((readRuleByte(matchPtr)&0x3F) != 0x3F)) {
+                    emitPhoneme(readRuleByte(matchPtr));
 					matchPtr++;
 				}
 				graPtr += graLen;
@@ -253,7 +268,7 @@ void Converter::LocateRightContext(const uint8_t *myRulePtr)
 
 getRightContext:
     DebugRule("getRightContext", myRulePtr, graPtr);
-	while ((*myRulePtr & 0x40)!=0) {
+	while (RULEBIT6(myRulePtr)) {
 		myRulePtr++;
 	}
 
@@ -263,12 +278,12 @@ getRightContext:
 	nextRightGraphemePtr = graPtr;
 
 	grapheme = *graPtr; // XXX suspicious
-	if (*rulePtr == 0xBF) {
+	if (readRuleByte(rulePtr) == 0xBF) {
 		DebugPrintf("  context sep / noMoreRules\n");
 		goto L6D6A; // context separator
 	}
 
-	if (*rulePtr >= 0x9A) {
+	if (readRuleByte(rulePtr) >= 0x9A) {
 		DebugPrintf("  numeric/symbol match rule\n");
 		goto L6D73; // numeric/symbol match rule
 	}
@@ -287,12 +302,12 @@ L6D6A:
 	return;
 
 L6D73:
-	if ((*myRulePtr & 0x80)==0) {
+	if (NORULEBIT7(myRulePtr)) {
 		DebugPrintf("  L6D73 end of rule\n");
 		return;
 	}
 
-	if ((*myRulePtr & 0x40)!=0) {
+	if (RULEBIT6(myRulePtr)) {
 		DebugPrintf("  L6D73 return right context but keep\n");
 		// right context but keep, return
 		return;
@@ -309,9 +324,9 @@ L6D73:
 
 	// note: aslb followed by bs lsrb strips the top bit
 
-	if (grapheme != (*myRulePtr & 0x7F)) {
+	if (grapheme != (readRuleByte(myRulePtr) & 0x7F)) {
 		// rule does not match
-		DebugPrintf("  skip rule no match <%02X>[%02X]\n", *myRulePtr & 0x7F, grapheme);
+		DebugPrintf("  skip rule no match <%02X>[%02X]\n", readRuleByte(myRulePtr) & 0x7F, grapheme);
 		myRulePtr = skipRule(myRulePtr);
 		goto getRightContext;
 	}
@@ -331,7 +346,7 @@ const uint8_t *Converter::skipRule(const uint8_t *myRulePtr)
 	myRulePtr++;
 
     // loop while b7 set
-	while ((*myRulePtr & 0x80) != 0) {
+	while (RULEBIT7(myRulePtr)) {
         myRulePtr++;
 	}
 
@@ -339,7 +354,7 @@ const uint8_t *Converter::skipRule(const uint8_t *myRulePtr)
 	myRulePtr++;
 
     // loop while b7 unset (skip phonemes)
-	while ((*myRulePtr & 0x80) == 0) {
+	while (NORULEBIT7(myRulePtr)) {
 		myRulePtr++;
 	}
 
@@ -362,13 +377,13 @@ bool Converter::matchRuleSet()
 L6DA7:
     myRulePtr--;
 	DebugRule("matchRuleSet-backup", myRulePtr, graPtr);
-	if ((*myRulePtr & 0x80) == 0) {
+	if (NORULEBIT7(myRulePtr)) {
 		// end of left context; scan forwards
 		goto L6DB9;
 	}
 	rulePtr = myRulePtr;
 	context = 0; // left context
-	if (!matchRule(*rulePtr)) {
+	if (!matchRule(readRuleByte(rulePtr))) {
 		DebugPrintf("  rule does not match\n");
 		return false;
 	}
@@ -382,20 +397,20 @@ L6DB9:
 L6DBF:
     myRulePtr++;
 	DebugRule("matchRuleSet-forward", myRulePtr, graPtr);
-	if ((*myRulePtr & 0x80)==0) {
+	if (NORULEBIT7(myRulePtr)) {
 		DebugPrintf("  no more rules\n");
 		// no more rules, use following phonemes
 		matchPtr = myRulePtr;
         return true;
 	}
-	if ((*myRulePtr & 0x40)==0) {
+	if (NORULEBIT6(myRulePtr)) {
 		DebugPrintf("  right context already consumed");
 		// skip right context already consumed
 		goto L6DBF;
 	}
 	rulePtr = myRulePtr;
 	context = 1; // right context
-	if (!matchRule(*myRulePtr)) {
+	if (!matchRule(readRuleByte(myRulePtr))) {
 		DebugPrintf("  rule does not match\n");
 		return false;
 	}
