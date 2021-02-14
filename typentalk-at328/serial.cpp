@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <util/crc16.h>
+#include "globals.h"
 #include "speech.h"
 #include "serial.h"
 #include "../library/convert.h"
@@ -25,6 +26,8 @@ class ArduinoTypeTalk: public TypeTalk {
 char inputBuffer[INPUTBUF_SIZE];
 
 uint8_t LastSerialByte;
+unsigned long LastSerialUpdate;
+unsigned long SerialIdle;
 
 void ArduinoConverter::emitPhoneme(uint8_t phoneme)
 {
@@ -54,12 +57,28 @@ void SerialUpdate()
     GloTypeTalk.bufferCharacter(data);
 
     LastSerialByte = data;
+
+    SerialIdle = 0;
+  } else {
+    // no data. Check for idle timeout.
+    if (GloTypeTalk.ModeTimer && GloTypeTalk.hasData() && (tLoopTop > LastSerialUpdate)) {
+        unsigned long elapsed = tLoopTop - LastSerialUpdate;
+        SerialIdle = SerialIdle + elapsed;
+        if (SerialIdle > 4000000) {
+            GloTypeTalk.processLine();
+        }
+    }
   }
+
+  LastSerialUpdate = tLoopTop;
 }
 
 void SerialInit() {
 
     GloTypeTalk.initBuffer(inputBuffer, INPUTBUF_SIZE);
+
+    LastSerialUpdate = 0;
+    SerialIdle = 0;
 
     LastSerialByte = 0xFF;
     Serial.begin(9600);

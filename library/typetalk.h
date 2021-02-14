@@ -11,6 +11,7 @@ class TypeTalk {
         bool ModePSend;
         bool ModeEcho;
         bool ModeCaps;
+        bool ModeTimer;
 
         char *inputBuffer;
         char *inputBufPtr;
@@ -26,6 +27,10 @@ class TypeTalk {
         void handleCharacter(char ch);
         virtual void putCharacter(char ch);
 
+        void processLine();
+
+        bool hasData() { return inputBufLen>0; }
+
         void setPSend(bool b) { ModePSend = b; }
         void setEcho(bool b) { ModeEcho = b; }
         void setCaps(bool b) { ModeCaps = b; }
@@ -35,7 +40,6 @@ class TypeTalk {
         uint8_t State;
         char *wordBuf;
 
-        void processLine();
         void handleEscape(char ch);
         void init();
 };

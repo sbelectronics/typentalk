@@ -34,7 +34,7 @@ void TypeTalk::handleEscape(char ch)
 		    ModeCaps = false;
 			break;
 		case 0x17:
-		    // timer off
+		    ModeTimer = false;
 			break;
 		case 0x18:
 		    // reset
@@ -173,6 +173,7 @@ void TypeTalk::init()
 	ModePSend = false;
 	ModeEcho = true;
     ModeCaps = false;
+	ModeTimer = true;
 	wordBuf = converter->getWordBuf();
 	lastInputChar = '\0';
 }
