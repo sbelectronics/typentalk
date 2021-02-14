@@ -4,6 +4,7 @@
 extern uint8_t SpeechLastPhonemeOut;
 extern uint8_t SpeechBufCount;
 extern uint8_t SpeechState;
+extern bool SpeechWritePA0OnEmpty;
 
 void SpeechUpdate();
 void SpeechInit();

@@ -35,6 +35,7 @@ uint8_t *SpeechBufTail;
 uint8_t *SpeechBufEnd = &SpeechBuf[SPEECHBUF_SIZE-1];  // the last valid position in the buffer
 uint8_t SpeechBufCount;
 uint8_t SpeechState;
+bool SpeechWritePA0OnEmpty;
 
 uint8_t SpeechLastPhonemeOut;
 
@@ -184,37 +185,9 @@ void OutputInflection(uint8_t inflection)
     PORTB = (PORTB & ~INFLECTION_MASK) | inflection;
 }
 
-void SpeechUpdate()
+void WritePhoneme(uint8_t data)
 {
     uint8_t busyWaitCounter;
-
-    if ((SpeechState & SPEECH_ERR_MASK) == SPEECH_ERR_MASK) {
-        // error state, do not update
-        return;
-    }
-
-    if ((PINC & AR_PIN) == 0) {
-        SpeechState = SPEECH_BUSY;
-        return;
-    }
-
-    /*
-    OutputPhoneme(0x38);
-    StrobeLow();
-    delay(1);
-    StrobeHigh();
-    while (1) ;
-    return;
-    */
-
-    if (SpeechBufIsEmpty()) {
-        SpeechState = SPEECH_IDLE;
-        //SpeechTest();
-        return;
-    }
-
-    // votrax is ready for data, and there are phonemes to speak
-    uint8_t data = SpeechBufRemove();
 
     SpeechLastPhonemeOut = data;
     OutputPhoneme(data & 0x3F);
@@ -238,12 +211,43 @@ void SpeechUpdate()
     OutputPhoneme(0x00); // reset phonemes - remember that odd high power consumption??
 }
 
+void SpeechUpdate()
+{
+    if ((SpeechState & SPEECH_ERR_MASK) == SPEECH_ERR_MASK) {
+        // error state, do not update
+        return;
+    }
+
+    if ((PINC & AR_PIN) == 0) {
+        SpeechState = SPEECH_BUSY;
+        return;
+    }
+
+    if (SpeechBufIsEmpty()) {
+        if (SpeechState != SPEECH_IDLE) {
+            // Write a PA0 on empty buffer
+            // This is what the type'n talk does...
+            if (SpeechWritePA0OnEmpty) {
+                WritePhoneme(0x03);
+            }
+            SpeechState = SPEECH_IDLE;
+        }
+        return;
+    }
+
+    // votrax is ready for data, and there are phonemes to speak
+    uint8_t data = SpeechBufRemove();
+
+    WritePhoneme(data);
+}
+
 void SpeechInit()
 {
     SpeechBufHead = SpeechBuf;
     SpeechBufTail = SpeechBuf;
     SpeechBufCount = 0;
     SpeechLastPhonemeOut = 0;
+    SpeechWritePA0OnEmpty = false;
 
     // shdn is output, default is low (amp is shutdown)
     PORTC &= (~SHDN_PIN);

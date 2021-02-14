@@ -8,30 +8,61 @@
 //#include "amplifier.h"
 //#include "slave.h"
 
+class ArduinoConverter: public Converter {
+  public:
+  		virtual void emitPhoneme(uint8_t phoneme);
+		  virtual void putCharacter(char ch);
+};
+
+class ArduinoTypeTalk: public TypeTalk {
+  public:
+      ArduinoTypeTalk(Converter *aConverter) : TypeTalk(aConverter) {}
+		  virtual void putCharacter(char ch);
+};
+
+
 #define INPUTBUF_SIZE 750
 char inputBuffer[INPUTBUF_SIZE];
 
 uint8_t LastSerialByte;
-Converter *GloConverter = NULL;
-TypeTalk *GloTypeTalk = NULL;
+
+void ArduinoConverter::emitPhoneme(uint8_t phoneme)
+{
+  SpeechWritePA0OnEmpty = true; // force this in type'n talk mode
+  SpeechBufInsert(phoneme);
+}
+
+void ArduinoConverter::putCharacter(char ch)
+{
+  Serial.write(ch);
+}
+
+void ArduinoTypeTalk::putCharacter(char ch)
+{
+  Serial.write(ch);
+}
+
+// static declare these so they get accounted for in RAM usage
+ArduinoConverter GloConverter;
+ArduinoTypeTalk GloTypeTalk (&GloConverter);
 
 void SerialUpdate()
 {
   if (Serial.available() > 0) {
     uint8_t data = Serial.read();
 
-    GloTypeTalk->handleCharacter(data);
+    GloTypeTalk.bufferCharacter(data);
 
     LastSerialByte = data;
   }
 }
 
 void SerialInit() {
-    GloConverter = new Converter();
-    GloTypeTalk = new TypeTalk(GloConverter);
 
-    GloTypeTalk->initBuffer(inputBuffer, INPUTBUF_SIZE);
+    GloTypeTalk.initBuffer(inputBuffer, INPUTBUF_SIZE);
 
     LastSerialByte = 0xFF;
     Serial.begin(9600);
+
+    Serial.write("test\r\n");
 }
