@@ -4,6 +4,7 @@ AVR_TOOLS_DIR = /usr
 AVRDUDE_CONF=/usr/share/arduino/hardware/tools/avrdude.conf
 ARDUINO_DIR=/home/smbaker/projects/pi/arduino-build/arduino
 ARDUINO_MK_FILE=/usr/share/arduino/Arduino.mk
+ARDUINO_LIBS = Adafruit-GFX-Library Wire Adafruit_LED_Backpack Adafruit_BusIO Adafruit-TPA2016-Library SPI
 
 ISP_PROG=usbasp
 
@@ -14,7 +15,7 @@ ISP_HIGH_FUSE = 0xDF
 ISP_LOW_FUSE = 0xE2
 ISP_EXT_FUSE = 0xFF
 
-TTLIBSRC = ../library/ruleset.cpp ../library/typetalk.cpp ../library/convert.cpp
+TTLIBSRC = ../library/ruleset.cpp ../library/typetalk.cpp ../library/convert.cpp ../library/phoneme.cpp
 LOCAL_CPP_SRCS = $(wildcard *.cpp) ${TTLIBSRC}
 
 include $(ARDUINO_MK_FILE)

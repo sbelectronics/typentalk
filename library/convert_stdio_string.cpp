@@ -1,4 +1,5 @@
 #include <string.h>
+#include "phoneme.h"
 
 #include "convert_stdio_string.h"
 
@@ -9,11 +10,14 @@ StringStdioConverter::StringStdioConverter(void)
 
 void StringStdioConverter::emitPhoneme(uint8_t phoneme)
 {
-    if (*outputBuf) {
+	char phonemeBuf[MAX_PHONEME_BUF];
+  if (*outputBuf) {
 		char space = ' ';
 
 		strncat(outputBuf, &space, 1);
 	}
-	strcat(outputBuf, phonemes[phoneme & 0x3F]);
+	if (getPhoneme(phoneme & 0x3F, phonemeBuf)) {
+	    strcat(outputBuf, phonemeBuf);
+	}
 }
 

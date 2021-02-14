@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "convert_stdio.h"
+#include "phoneme.h"
 
 void StdioConverter::SetEmit(bool b)
 {
@@ -11,7 +12,11 @@ void StdioConverter::SetEmit(bool b)
 void StdioConverter::emitPhoneme(uint8_t phoneme)
 {
 	if (ModeEmit) {
-        fprintf(stdout, "<%s> ", phonemes[phoneme & 0x3F]);
+		char phonemeBuf[MAX_PHONEME_BUF];
+
+		if (getPhoneme(phoneme & 0x3F, phonemeBuf)) {
+            fprintf(stdout, "<%s> ", phonemeBuf);
+		}
 	}
 }
 
@@ -37,6 +42,7 @@ void StdioConverter::DebugPrintf(const char *format, ...)
 void StdioConverter::DebugRule(const char *txt, uint8_t *myRulePtr, uint8_t *graPtr)
 {
     uint8_t *save;
+	char phonemeBuf[MAX_PHONEME_BUF];
 
     if (!debug) {
 		return;
@@ -63,10 +69,12 @@ void StdioConverter::DebugRule(const char *txt, uint8_t *myRulePtr, uint8_t *gra
 
     myRulePtr = save;
 	DebugPrintf(" (");
-	DebugPrintf("/%s", phonemes[*myRulePtr & 0x3F]);
+	getPhoneme(*myRulePtr & 0x3F, phonemeBuf);
+	DebugPrintf("/%s", phonemeBuf);
 	myRulePtr++;
 	while ((*myRulePtr & 0x80) == 0) {
-		DebugPrintf("/%s", phonemes[*myRulePtr & 0x3F]);
+		getPhoneme(*myRulePtr & 0x3F, phonemeBuf);
+		DebugPrintf("/%s", phonemeBuf);
 		myRulePtr++;
 	}
 	DebugPrintf(")");

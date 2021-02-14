@@ -1,4 +1,4 @@
-TTLIBSRC = ../library/ruleset.cpp ../library/typetalk.cpp ../library/convert.cpp ../library/convert_stdio.cpp ../library/convert_stdio_string.cpp ../library/typetalk_stdio.cpp
+TTLIBSRC = ../library/ruleset.cpp ../library/typetalk.cpp ../library/convert.cpp ../library/convert_stdio.cpp ../library/convert_stdio_string.cpp ../library/typetalk_stdio.cpp ../library/phoneme.cpp
 
 all: typetalk
 

@@ -2,6 +2,7 @@
 #include <Wire.h>
 #include <util/crc16.h>
 #include "speech.h"
+#include "display.h"
 
 // AR goes from HIGH to LOW following strobe
 // AR hoes from LOW back to HIGH when phoneme is complete
@@ -230,6 +231,7 @@ void SpeechUpdate()
             if (SpeechWritePA0OnEmpty) {
                 WritePhoneme(0x03);
             }
+            DisplayClear();
             SpeechState = SPEECH_IDLE;
         }
         return;
@@ -239,6 +241,7 @@ void SpeechUpdate()
     uint8_t data = SpeechBufRemove();
 
     WritePhoneme(data);
+    DisplayUpdate(data);
 }
 
 void SpeechInit()

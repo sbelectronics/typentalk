@@ -52,6 +52,10 @@ void TypeTalk::bufferCharacter(char ch)
 		putCharacter(ch);
 	}
 
+	if (ch == '\0') {
+		return;
+	}
+
 	if (inputBuffer == NULL) {
 		// buffering not supported
 		handleCharacter(ch);
@@ -64,6 +68,15 @@ void TypeTalk::bufferCharacter(char ch)
 	}
 
 	lastInputChar = ch;
+
+	if (ch == 0x08) {
+		// backspace
+        if (inputBufLen>0) {
+			inputBufLen--;
+			inputBufPtr--;
+		}
+		return;
+	}
 
 	if ((ch == 0x0D) || (ch == 0x0A)) {
 		processLine();

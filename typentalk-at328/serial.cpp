@@ -6,7 +6,7 @@
 #include "serial.h"
 #include "../library/convert.h"
 #include "../library/typetalk.h"
-//#include "amplifier.h"
+#include "display.h"
 //#include "slave.h"
 
 class ArduinoConverter: public Converter {
@@ -65,7 +65,7 @@ void SerialUpdate()
         unsigned long elapsed = tLoopTop - LastSerialUpdate;
         SerialIdle = SerialIdle + elapsed;
         if (SerialIdle > 4000000) {
-            GloTypeTalk.processLine();
+          GloTypeTalk.processLine();
         }
     }
   }
