@@ -6,7 +6,9 @@
 #include "serial.h"
 #include "../library/convert.h"
 #include "../library/typetalk.h"
+#include "../library/ext_escape.h"
 #include "display.h"
+#include "amplifier.h"
 //#include "slave.h"
 
 class ArduinoConverter: public Converter {
@@ -19,6 +21,7 @@ class ArduinoTypeTalk: public TypeTalk {
   public:
       ArduinoTypeTalk(Converter *aConverter) : TypeTalk(aConverter) {}
 		  virtual void putCharacter(char ch);
+      virtual void executeEscape(uint8_t escapeOp);
 };
 
 
@@ -43,6 +46,21 @@ void ArduinoConverter::putCharacter(char ch)
 void ArduinoTypeTalk::putCharacter(char ch)
 {
   Serial.write(ch);
+}
+
+void ArduinoTypeTalk::executeEscape(uint8_t escapeOp)
+{
+    switch (escapeOp) {
+      case ESC_VOL:
+        AmpSetVolume(escapeParam, true);
+        break;
+      case ESC_DAISY:
+        SpeechProgMem(DAISY, 255);
+        break;
+      default:
+        TypeTalk::executeEscape(escapeOp);
+        break;
+    }
 }
 
 // static declare these so they get accounted for in RAM usage

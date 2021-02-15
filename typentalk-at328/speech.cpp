@@ -3,6 +3,7 @@
 #include <util/crc16.h>
 #include "speech.h"
 #include "display.h"
+#include "amplifier.h"
 
 // AR goes from HIGH to LOW following strobe
 // AR hoes from LOW back to HIGH when phoneme is complete
@@ -40,7 +41,7 @@ bool SpeechWritePA0OnEmpty;
 
 uint8_t SpeechLastPhonemeOut;
 
-const uint8_t THIS_IS_A_TEST[18] = {0x38, 0x09, 0x0A, 0x1F,          // This
+const uint8_t THIS_IS_A_TEST[18] PROGMEM = {0x38, 0x09, 0x0A, 0x1F,          // This
                                 0x3E,
                                 0x27, 0x12,                          // Is
                                 0x3E,
@@ -49,7 +50,9 @@ const uint8_t THIS_IS_A_TEST[18] = {0x38, 0x09, 0x0A, 0x1F,          // This
                                 0x2A, 0x02, 0x00, 0x1F, 0x2A,        // Test
                                 0x3F};                               // Stop
 
-const uint8_t DAISY[255] = {
+const uint8_t SYSTEM_READY[13] PROGMEM = {0x3E, 0x1F, 0x0A, 0x1F, 0x2A, 0x02, 0x0C, 0x03, 0x2B, 0x02, 0x1E, 0x29, 0x03};
+
+const uint8_t DAISY[255] PROGMEM = {
         0xDE, 0xC6, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1, 0xE1, 
         0xD2, 0xD2, 0xA9, 0xA9, 0xA9, 0xA9, 0xA9, 0x03, 
         0x9E, 0x86, 0xA1, 0xA1, 0xA1, 0xA1, 0xA1, 0xA1, 
@@ -157,7 +160,12 @@ uint8_t SpeechBufRemove()
 void SpeechAmpEnable(bool enable) 
 {
     if (enable) {
-        PORTC |= SHDN_PIN;
+        // check to see if it's already enabled
+        if ((PORTC & SHDN_PIN) == 0) {
+            PORTC |= SHDN_PIN;
+            delay(1); // give it a millisecond before sending I2C commands
+            AmpSetup();
+        }        
     } else {
         PORTC &= (~SHDN_PIN);
     }
@@ -241,7 +249,7 @@ void SpeechUpdate()
     uint8_t data = SpeechBufRemove();
 
     WritePhoneme(data);
-    DisplayUpdate(data);
+    DisplayUpdate(data & 0x3F);
 }
 
 void SpeechInit()
@@ -268,16 +276,18 @@ void SpeechInit()
     SpeechState = SPEECH_INIT;
 }
 
-void SpeechTest()
+void SpeechProgMem(const uint8_t *p, uint8_t count)
 {
-    uint16_t i;
+    int i;
 
-    for (i=0; i<18; i++) {
-        SpeechBufInsert(THIS_IS_A_TEST[i]);
-    } 
-    
-    //for (i=0; i<255; i++) {
-    //    SpeechBufInsert(DAISY[i]);
-    //} 
+    for (i=0; i<count; i++) {
+      uint8_t phoneme = pgm_read_byte_near(p);
+      p++;
+      SpeechBufInsert(phoneme);
+    }
 }
 
+void SpeechSystemReady()
+{
+    SpeechProgMem(SYSTEM_READY, 13) ;
+}

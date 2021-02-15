@@ -15,7 +15,7 @@ ISP_HIGH_FUSE = 0xDF
 ISP_LOW_FUSE = 0xE2
 ISP_EXT_FUSE = 0xFF
 
-TTLIBSRC = ../library/ruleset.cpp ../library/typetalk.cpp ../library/convert.cpp ../library/phoneme.cpp
+TTLIBSRC = ../library/ruleset.cpp ../library/typetalk.cpp ../library/convert.cpp ../library/phoneme.cpp ../library/ext_escape.cpp
 LOCAL_CPP_SRCS = $(wildcard *.cpp) ${TTLIBSRC}
 
 include $(ARDUINO_MK_FILE)

@@ -3,6 +3,7 @@
 #include "defs.h"
 #include "slave.h"
 #include "display.h"
+#include "amplifier.h"
 #include "serial.h"
 #include "speech.h"
 #include "globals.h"
@@ -12,6 +13,7 @@ unsigned long tLoopTop;
 void setup()
 {
     DisplayInit();
+    AmpInit();
     SpeechInit();
     SerialInit();
 #ifdef SLAVE
@@ -19,7 +21,7 @@ void setup()
 #endif
 
     SpeechAmpEnable(true);
-    SpeechTest();
+    SpeechSystemReady();
 }
 
 void loop()

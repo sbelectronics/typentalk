@@ -12,32 +12,71 @@ TypeTalk::TypeTalk(Converter *aConverter)
     init();
 }
 
-void TypeTalk::handleEscape(char ch)
+void TypeTalk::executeEscape(uint8_t escapeOp)
+{
+	switch (escapeOp) {
+	    case ESC_PSEND_ON :
+    		ModePSend = true;
+	    	break;
+	    case ESC_PSEND_OFF:
+    		ModePSend = false;
+			break;
+		case ESC_ECHO_ON:
+		    ModeEcho = true;
+			break;
+		case ESC_ECHO_OFF:
+		    ModeEcho = false;
+			break;
+		case ESC_CAPS_ON:
+		    ModeCaps = true;
+			break;
+		case ESC_CAPS_OFF:
+		    ModeCaps = false;
+			break;
+		case ESC_TIMER_OFF:
+		    ModeTimer = false;
+			break;
+		case ESC_CRLF_ON:
+		    ModeCRLF = true;
+			break;
+		case ESC_CRLF_OFF:
+		    ModeCRLF = false;
+			break;
+		case ESC_PING:
+		    putCharacter('P');
+			putCharacter('O');
+			putCharacter('N');
+			putCharacter('G');
+			break;
+    }
+}
+
+void TypeTalk::handleEscapeCharacter(char ch)
 {
 	switch (ch) {
 	    case 0x11:
-    		ModePSend = true;
+		    executeEscape(ESC_PSEND_ON);
 	    	break;
 	    case 0x12:
-    		ModePSend = false;
+		    executeEscape(ESC_PSEND_OFF);
 			break;
 		case 0x13:
-		    ModeEcho = true;
+		    executeEscape(ESC_ECHO_ON);
 			break;
 		case 0x14:
-		    ModeEcho = false;
+		    executeEscape(ESC_ECHO_OFF);
 			break;
 		case 0x15:
-		    ModeCaps = true;
+		    executeEscape(ESC_CAPS_ON);
 			break;
 		case 0x16:
-		    ModeCaps = false;
+		    executeEscape(ESC_CAPS_OFF);
 			break;
 		case 0x17:
-		    ModeTimer = false;
+		    executeEscape(ESC_TIMER_OFF);
 			break;
 		case 0x18:
-		    // reset
+		    executeEscape(ESC_RESET);
 			break;
     }
 }
@@ -48,6 +87,8 @@ void TypeTalk::putCharacter(char ch)
 
 void TypeTalk::bufferCharacter(char ch)
 {   
+    uint8_t escSeq, escLen;
+
 	if (ModeEcho) {
 		putCharacter(ch);
 	}
@@ -62,8 +103,16 @@ void TypeTalk::bufferCharacter(char ch)
 		return;
 	}
 
+	if (lastInputChar == 0x18) {
+		// we're in an escape sequence
+        handleEscapeCharacter(ch);
+		lastInputChar = ch;
+		return;
+	}
+
 	if ((ch == 0x0A) && (lastInputChar == 0x0D)) {
 		// ignore the LF that follows a CR
+		lastInputChar = ch;
 		return;
 	}
 
@@ -87,6 +136,14 @@ void TypeTalk::bufferCharacter(char ch)
 	*inputBufPtr = ch;
 	inputBufPtr++;
 	inputBufLen++;
+
+	// extended escape sequence
+	escSeq = (reverseMatchExtendedEscape(inputBufPtr, inputBufLen, &escLen));
+	if (escSeq != ESC_NONE) {
+        inputBufPtr -= escLen;
+		inputBufLen -= escLen;
+		executeEscape(escSeq);
+	}
 
 	// buffer full ?
 	if (inputBufLen >= inputBufSize) {
@@ -127,20 +184,11 @@ void TypeTalk::handleCharacter(char ch) {
 					// Phoneme sequence is ~ ... ?
                     State = STATE_PHONEME;
 					goto restart;
-				} else if (ch == 0x1B) {
-					State = STATE_ESCAPE;
-					// no restart -- fall through and return
 				} else {
 					State = STATE_NONLETTER;
 					goto restart;
 				}
 			}
-
-		case STATE_ESCAPE:
-		    handleEscape(ch);
-			State = STATE_INITIAL;
-			// no restart -- fall through and return
-		    break;
 			
 		case STATE_SPACE:
 		    State = STATE_INITIAL;
@@ -187,6 +235,7 @@ void TypeTalk::init()
 	ModeEcho = true;
     ModeCaps = false;
 	ModeTimer = true;
+	ModeCRLF = false;
 	wordBuf = converter->getWordBuf();
 	lastInputChar = '\0';
 }

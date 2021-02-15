@@ -2,6 +2,7 @@
 #define __TYPETALK_H__
 
 #include "tt_types.h"
+#include "ext_escape.h"
 #include "convert.h"
 
 #define MAX_WORDBUF 32
@@ -12,6 +13,7 @@ class TypeTalk {
         bool ModeEcho;
         bool ModeCaps;
         bool ModeTimer;
+        bool ModeCRLF;
 
         char *inputBuffer;
         char *inputBufPtr;
@@ -27,6 +29,8 @@ class TypeTalk {
         void handleCharacter(char ch);
         virtual void putCharacter(char ch);
 
+        virtual void executeEscape(uint8_t escapeOp);
+
         void processLine();
 
         bool hasData() { return inputBufLen>0; }
@@ -40,7 +44,7 @@ class TypeTalk {
         uint8_t State;
         char *wordBuf;
 
-        void handleEscape(char ch);
+        void handleEscapeCharacter(char ch);
         void init();
 };
 
