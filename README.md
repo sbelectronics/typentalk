@@ -24,15 +24,39 @@ The votrax sequences (ESC followed by a low-ASCII code) are really
 hard to use, so I implemented some ascii tokens that work the same
 way. They use double curly braces at the start and stop.
 
-* {{psendon}} and {{psendoff}}. Default Off. If psend mode is on, then phonemes will be written to serial instead of spoken.
-* {{echoon}} and {{echooff}}. Default On. Turn character echo on/off.
-* {{capson}} and {{capsoff}}. Default Off. If caps mode is on, then any word that starts with two or more upper case letters will be spoken letter-by-letter.
-* {{timeron}} and {{timeroff}}. Default On. The timer will cause speech to be spoken if idle for approximately 4 seconds. Otherwise, waits for a CR.
-* {{reset}}. Resets the engine.
-* {{crlfon}} and {{crlfoff}}. Default off. If on, then outgoing CR will be followed by a LF.
-* {{ping}}. Responds with "pong".
-* {{daisy}}. Sings Daisy from the Hero Jr. 
-* {{volNN}}. Sets the amplifier volume. NN is a two-digit decimal number from 00 to 50.
+* `{{psendon}}` and `{{psendoff}}`. Default Off. If psend mode is on, then phonemes will be written to serial instead of spoken.
+* `{{echoon}}` and `{{echooff}}`. Default On. Turn character echo on/off.
+* `{{capson}}` and `{{capsoff}}`. Default Off. If caps mode is on, then any word that starts with two or more upper case letters will be spoken letter-by-letter.
+* `{{timeron}}` and `{{timeroff}}`. Default On. The timer will cause speech to be spoken if idle for approximately 4 seconds. Otherwise, waits for a CR.
+* `{{reset}}`. Resets the engine.
+* `{{crlfon}}` and `{{crlfoff}}`. Default off. If on, then outgoing CR will be followed by a LF.
+* `{{ping}}`. Responds with "pong".
+* `{{daisy}}`. Sings Daisy from the Hero Jr. 
+* `{{volNN}}`. Sets the amplifier volume. NN is a two-digit decimal number from 00 to 50.
+
+## Configuration
+
+Editing `defs.h` is essential to configuring the features in the Arduino
+code. Do this before you compile and build your ROM.
+
+`SLAVE` ... if this is defined, then the board will be able to function
+as an I2C slave connected to a host microcontroller. Even if this is
+defined, then serial mode is still supported. Defining SLAVE eliminates
+the ability of the board to function as an I2C master -- effectively
+preventing the AMPLIFIER and ALPHA4 defines.
+
+`ALPHA4` ... if this is defined (and if SLAVE is not defined), then the
+board will function as an I2C master and control an Adafruit I2C 14-segment
+display backpack to display the phoneme spoken. It's a purely aesthetic
+feature. If you define this but don't have the LED backpack connected, then
+the board may hang while trying to talk to the displays.
+
+`AMPLIFIER` ... if this is defined (and if SLAVE is not defined), then the
+board will function as an I2C master and control an attached TPA2016
+amplifier board to have software control of volume. Volume may then
+be controlled via serial. If you define this but don't have the amplifier
+connected, then the board may hang while trying to talk to the
+amplifier.
 
 ## Linux version
 
