@@ -1,3 +1,25 @@
+/*
+ * Type 'N Talk Text to Speech Engine
+ * 
+ * Scott Baker, http://www.smbaker.com/
+ * 
+ * This is the Votrax Type 'N Talk text to speech engine, converted from
+ * an assembly language source originally disassembled by Simon Rowe. This
+ * is not a machine-generated conversion, but represents hand conversion
+ * of the assembly behavior into the C++ language, by Scott Baker. It is
+ * not pretty code -- I did not understand 6800 assembly well when I 
+ * did the conversion, and I have not been a C/C++ programmer for a
+ * decade so my skills are rusty. It's a hodgepodge of C/C++ syntax
+ * together with assembly workflow.
+ * 
+ * It is, however, reasonably correct. Probably not perfect, but is
+ * close.
+ * 
+ * typetalk.cpp is the high-level parsing engine that buffers text until
+ * a CR is pressed, then breaks up the text into a series of words and
+ * converts then individually.
+ */
+
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>

@@ -1,3 +1,14 @@
+/*
+ * Type 'N Talk Text to Speech Engine
+ * 
+ * Scott Baker, http://www.smbaker.com/
+ * 
+ * This is an arduino implementation of the Votrax Type 'N Talk
+ * standalone speech device. It is not an emulation of the SC-01A
+ * itself, but relies on an actual real rare and expensive 
+ * SC-01A to convert the phonemes to speech.
+ */
+
 #include <Arduino.h>
 #include <Wire.h>
 #include "defs.h"
