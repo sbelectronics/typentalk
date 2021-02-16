@@ -15,6 +15,8 @@ class TypeTalk {
         bool ModeTimer;
         bool ModeCRLF;
 
+        bool inEscapeSequence;
+
         char *inputBuffer;
         char *inputBufPtr;
         int inputBufLen;
@@ -27,6 +29,7 @@ class TypeTalk {
 
         void bufferCharacter(char ch);
         void handleCharacter(char ch);
+        void echoCharacter(char ch);
         virtual void putCharacter(char ch);
 
         virtual void executeEscape(uint8_t escapeOp);

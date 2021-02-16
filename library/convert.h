@@ -29,6 +29,7 @@ class Converter {
 		void convert(uint8_t *, uint8_t);
 		void convertBuffer();
 		void setModePSend(bool b);
+		void setModeCaps(bool b);
 		void setDebug(bool b) { debug = b; }
 
 	protected:
@@ -48,6 +49,7 @@ class Converter {
 
 		bool debug;
 		bool modePSend;
+		bool modeCaps;
 
 		uint8_t wordToGraphenesInPlace(uint8_t *graphenes);
 

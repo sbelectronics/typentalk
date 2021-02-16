@@ -57,6 +57,10 @@ void ArduinoTypeTalk::executeEscape(uint8_t escapeOp)
       case ESC_DAISY:
         SpeechProgMem(DAISY, 255);
         break;
+      case ESC_RESET:
+        TypeTalk::executeEscape(escapeOp);
+        SpeechSystemReady();
+        break;
       default:
         TypeTalk::executeEscape(escapeOp);
         break;

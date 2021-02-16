@@ -109,13 +109,19 @@ int txt2grTable[] = {
 
 Converter::Converter()
 {
-    debug = false; //true;
+    debug = false;
 	modePSend = false;
+	modeCaps = false;
 }
 
 void Converter::setModePSend(bool b)
 {
 	modePSend = b;
+}
+
+void Converter::setModeCaps(bool b)
+{
+	modeCaps = b;
 }
 
 char *Converter::getWordBuf()
@@ -174,17 +180,37 @@ const uint8_t *Converter::getRuleSet(uint8_t grapheme)
 void Converter::convertBuffer()
 {
 	uint8_t len;
+	bool letterByLetter = false;
+
+	if (modeCaps && (isupper(*(grapheneBuf+2)) && isupper(*(grapheneBuf + 3)))) {
+		letterByLetter = true;
+	}
 
     len = wordToGraphenesInPlace(grapheneBuf + 2);
-	convert(grapheneBuf+2, len); // two-byte sentinel at start
+
+    if (letterByLetter) {
+		// for letter-by-letter mode, construct a little buffer that
+		// will hold only one character.
+
+		uint8_t buf[5] = {0xFF, 0x7F, 0x00, 0xFF, 0xFF};
+		int i;
+
+		for (i=0; i<len; i++) {
+			buf[2] = grapheneBuf[i+2];
+			convert(buf+2, 1);
+		}
+	} else {
+	    convert(grapheneBuf+2, len); // two-byte sentinel at start
+	}
 }
 
 void Converter::addPhoneme(uint8_t phoneme)
 {
 	if (modePSend) {
 		putCharacter(phoneme + 0x40);
+	} else {
+	    emitPhoneme(phoneme);
 	}
-	emitPhoneme(phoneme);
 }
 
 void Converter::convert(uint8_t *graphemeStart, uint8_t count)

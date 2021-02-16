@@ -29,40 +29,46 @@ void start_capture()
 
 void end_capture(char *buffer, int maxLen)
 {
+  int bRead;
+
   fflush(stdout);
 
-  read(out_pipe[0], buffer, maxLen); /* read from pipe into buffer */
+  bRead = read(out_pipe[0], buffer, maxLen); /* read from pipe into buffer */
+
+  for (int i=0; i<bRead; i++) {
+    // strcmp is hard with nulls in the sequence
+    if (buffer[i] == '\0') {
+      buffer[i] = 0xFE;
+    }
+  }
 
   dup2(saved_stdout, STDOUT_FILENO);  /* reconnect stdout for testing */
 }
 
-char *translate_cr(const char *input)
-{
-  char *dest = (char*) malloc(strlen(input)*4); // memory leak, who cares..
-  *dest = '\0';
-
-  while (*input) {
-    if ((*input) == '\r') {
-      strcat(dest, "<CR>");
-    } else {
-      strncat(dest, input, 1);
+void safeFprint(FILE * stream, char *bufin) {
+    unsigned char *buf = (unsigned char *) bufin;
+    int i;
+    while (*buf) {
+        if ((*buf >= 0 && *buf <=31 && *buf!='\n') || (*buf >= 127)) {
+            fprintf(stream, "<%02X>", *buf);
+        } else {
+            fprintf(stream, "%c", *buf);
+        }
+        buf++;
     }
-    input++;
-  }
-
-  return dest;
 }
+
 
 void test(const char *input, const char *output)
 {
   StdioConverter *sc = new StdioConverter();
   StdioTypeTalk *tt = new StdioTypeTalk(sc);
   char outputBuffer[MAX_OUTBUF_LEN+1] = {0};
+  char tmp[8192];
 
   tt->initBuffer(inputBuffer, INPUTBUF_SIZE);
 
   sc->SetEmit(false);
-  tt->setPSend(true);
   start_capture();
 
   for (const char *x=input; *x; x++) {
@@ -73,29 +79,96 @@ void test(const char *input, const char *output)
   end_capture(outputBuffer, MAX_OUTBUF_LEN);
 
   if (strcmp(outputBuffer, output) !=0) {
-    fprintf(stderr, "ERROR word='%s', converted=`%s`, correct=`%s`\n", input, translate_cr(outputBuffer), translate_cr(output));
+    sprintf(tmp, "ERROR word='%s', converted=`%s`, correct=`%s`\n", input, outputBuffer, output);
+    safeFprint(stderr, tmp);
     result++;
   } else {
-    fprintf(stderr, "OK word='%s', converted=`%s`\n", input, translate_cr(output));
+    sprintf(tmp, "OK word='%s', converted=`%s`\n", input, output);
+    safeFprint(stderr, tmp);
   }
 
   delete sc;
 }
 
-int main()
+void testEscapeSequences()
 {
+  // note: null is mapped to FE for easy strcmp
+
+  // test with psend default
+
   test("this is a test of the emergency broadcast system",
-       "this is a test of the emergency broadcast system\rCxIJ_~~KIRFaijB@_j~rcOxrB@Lz^ZB@M_iNkuw^Yo@_j_K_jB@L");
+       "this is a test of the emergency broadcast system\r");
 
-  test("now is the time for all good men to come to the aid of their country", 
-       "now is the time for all good men to come to the aid of their country\rCMUcw~~KIRxrjU@iL~]utk}X\\VV^LB@M~jvwYrcL~jvwxrFai^~rcOx@E@kYUcmMjki");
+  // test with psend off
 
-  test("the quick brown fox jumped over the lazy dog",
-      "the quick brown fox jumped over the lazy dog\rCxrYmKIYNkUcwM]UcYC_^ZcqLejutOzxrXFaiRi^}\\");
+  test("\x1B\x12this is a test of the emergency broadcast system",
+       "\x1B\xFEthis is a test of the emergency broadcast system\r");  
+
+  // test with psend on
+
+  test("\x1B\x11this is a test of the emergency broadcast system",
+       "\x1B\xFEthis is a test of the emergency broadcast system\rCxIJ_~~KIRFaijB@_j~rcOxrB@Lz^ZB@M_iNkuw^Yo@_j_K_jB@L");
+
+  test("\x1B\x11now is the time for all good men to come to the aid of their country", 
+       "\x1B\xFEnow is the time for all good men to come to the aid of their country\rCMUcw~~KIRxrjU@iL~]utk}X\\VV^LB@M~jvwYrcL~jvwxrFai^~rcOx@E@kYUcmMjki");
+
+  test("\x1B\x11the quick brown fox jumped over the lazy dog",
+      "\x1B\xFEthe quick brown fox jumped over the lazy dog\rCxrYmKIYNkUcwM]UcYC_^ZcqLejutOzxrXFaiRi^}\\");
+
+  // test with psend on, echo off
+
+  test("\x1B\x11\x1B\x14this is a test of the emergency broadcast system",
+       "\x1B\xFE\x1B" "CxIJ_~~KIRFaijB@_j~rcOxrB@Lz^ZB@M_iNkuw^Yo@_j_K_jB@L");  
+
+  // test with psend on, echo on
+
+  test("\x1B\x11\x1B\x13this is a test of the emergency broadcast system",
+       "\x1B\xFE\x1B\xFEthis is a test of the emergency broadcast system\rCxIJ_~~KIRFaijB@_j~rcOxrB@Lz^ZB@M_iNkuw^Yo@_j_K_jB@L");
+
+  // test ESC ESC
+
+  test("\x1B\x1Bthis is a test of the emergency broadcast system",
+       "\x1B\x1Bthis is a test of the emergency broadcast system\r");
 
   if (result > 0) {
     fprintf(stderr, "*** %d errors ***\n", result);
   }
+}
+
+void testPhrases()
+{
+  // test with psend on, echo off
+
+  test("\x1B\x11\x1B\x14now is the time for all good men to come to the aid of their country", 
+       "\x1B\xFE\x1B" "CMUcw~~KIRxrjU@iL~]utk}X\\VV^LB@M~jvwYrcL~jvwxrFai^~rcOx@E@kYUcmMjki");
+
+  test("\x1B\x11\x1B\x14the quick brown fox jumped over the lazy dog",
+      "\x1B\xFE\x1B" "CxrYmKIYNkUcwM]UcYC_^ZcqLejutOzxrXFaiRi^}\\");
+}
+
+void testOverflow()
+{
+  test("\x1B\x11\x1B\x14supercalifragilisticexpialidocious",
+       "\x1B\xFE\x1B" "C_vwezYo@XKI]ko@^ZKXKI_jK_B@YC_eKIcXKIKI^ttQc_");
+
+  test("\x1B\x11\x1B\x14" "abababababababababababababababababababab",
+       "\x1B\xFE\x1B" "Co@No@No@No@No@No@No@No@No@No@No@No@No@Nqco@No@No@No@No@No@No@N");
+
+  test("\x1B\x11\x1B\x14" "cabcabcabcabcabcabcabcabcabcabcabcabcabcab",
+       "\x1B\xFE\x1B" "CYo@NYo@NYo@NYo@NYo@NYo@NYo@NYo@NYo@NNYo@NYo@NYo@NYo@NYo@N");
+
+  test("\x1B\x11\x1B\x14" "dogcatdogcatdogcatdogcatdogcatdogcatdogcat",
+       "\x1B\xFE\x1B" "C^}\\Yo@j^Uc\\Yo@j^Uc\\Yo@j^Uc\\Yo@j^Uc\\\\Yo@j^Uc\\Yo@j^Uc\\Yo@j"); 
+
+  test("\x1B\x11\x1B\x14" "dogscatsdogscatsdogscatsdogscatsdogscatsdogs",
+       "\x1B\xFE\x1B" "C^}\\_Yo@j_^Uc\\_Yo@j_^Uc\\_Yo@j_^Uc\\\\_Yo@j_^Uc\\_Yo@j_^Uc\\R"); 
+}
+
+int main()
+{
+  testEscapeSequences();
+  testPhrases();
+  testOverflow();
 
   return result;
 }

@@ -42,6 +42,9 @@ void TypeTalk::executeEscape(uint8_t escapeOp)
 		case ESC_CRLF_OFF:
 		    ModeCRLF = false;
 			break;
+		case ESC_RESET:
+		    init();
+			break;
 		case ESC_PING:
 		    putCharacter('P');
 			putCharacter('O');
@@ -56,29 +59,50 @@ void TypeTalk::handleEscapeCharacter(char ch)
 	switch (ch) {
 	    case 0x11:
 		    executeEscape(ESC_PSEND_ON);
+			echoCharacter(0x00);
 	    	break;
 	    case 0x12:
 		    executeEscape(ESC_PSEND_OFF);
+			echoCharacter(0x00);
 			break;
 		case 0x13:
 		    executeEscape(ESC_ECHO_ON);
+			echoCharacter(0x00);
 			break;
 		case 0x14:
 		    executeEscape(ESC_ECHO_OFF);
+			echoCharacter(0x00);
 			break;
 		case 0x15:
 		    executeEscape(ESC_CAPS_ON);
+			echoCharacter(0x00);
 			break;
 		case 0x16:
 		    executeEscape(ESC_CAPS_OFF);
+			echoCharacter(0x00);
 			break;
 		case 0x17:
 		    executeEscape(ESC_TIMER_OFF);
+			echoCharacter(0x00);
 			break;
 		case 0x18:
+		    echoCharacter(0x00);
 		    executeEscape(ESC_RESET);
 			break;
+		case 0x1B:
+		    echoCharacter(0x1B);
+			break;			
     }
+}
+
+void TypeTalk::echoCharacter(char ch)
+{
+	if (ModeEcho) {
+		putCharacter(ch);
+		if ((ch=='\r') && (ModeCRLF)) {
+			putCharacter('\n');
+		}
+	}
 }
 
 void TypeTalk::putCharacter(char ch)
@@ -89,9 +113,14 @@ void TypeTalk::bufferCharacter(char ch)
 {   
     uint8_t escSeq, escLen;
 
-	if (ModeEcho) {
-		putCharacter(ch);
+	if (inEscapeSequence) {
+		// we're in an escape sequence
+        handleEscapeCharacter(ch);
+		inEscapeSequence = false;
+		return;
 	}
+
+	echoCharacter(ch);
 
 	if (ch == '\0') {
 		return;
@@ -103,13 +132,6 @@ void TypeTalk::bufferCharacter(char ch)
 		return;
 	}
 
-	if (lastInputChar == 0x18) {
-		// we're in an escape sequence
-        handleEscapeCharacter(ch);
-		lastInputChar = ch;
-		return;
-	}
-
 	if ((ch == 0x0A) && (lastInputChar == 0x0D)) {
 		// ignore the LF that follows a CR
 		lastInputChar = ch;
@@ -117,6 +139,12 @@ void TypeTalk::bufferCharacter(char ch)
 	}
 
 	lastInputChar = ch;
+
+	if (ch == 0x1B) {
+		// escape
+		inEscapeSequence = true;
+		return;
+	}
 
 	if (ch == 0x08) {
 		// backspace
@@ -207,8 +235,19 @@ void TypeTalk::handleCharacter(char ch) {
 		case STATE_LETTER:
 			if (isalpha(ch)) {
 				strncat(wordBuf, &ch, 1);
+				if (strlen(wordBuf) >= 0x1B) {
+					// Overflow case is weird. We say the word, but we don't consume
+					// the final character. Instead, we use it for the start of the
+					// next word.
+				    converter->setModePSend(ModePSend);
+				    converter->setModeCaps(ModeCaps);
+				    converter->convertBuffer();
+				    *wordBuf = '\0';
+					strncat(wordBuf, &ch, 1);
+				}
 			} else {
 				converter->setModePSend(ModePSend);
+				converter->setModeCaps(ModeCaps);
 				converter->convertBuffer();
 				*wordBuf = '\0';
 				State = STATE_INITIAL;
@@ -238,6 +277,7 @@ void TypeTalk::init()
 	ModeCRLF = false;
 	wordBuf = converter->getWordBuf();
 	lastInputChar = '\0';
+	inEscapeSequence = false;
 }
 
 void TypeTalk::initBuffer(char *bufPtr, int bufLen)
