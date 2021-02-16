@@ -7,13 +7,37 @@ to C++. It's ugly and nasty and has undergone only minimal
 work to make it appropriate for a high-level language.
 
 The goal is to be able to reproduce the T n T text-to-phoneme
-algorith,
+algorithm,
 
-The original assembly source came from a disassembly that
-was done by Simon Rowe. Dr. Hugo Holden's article
-"Type 'N Talk meets the HERO Jr. ROBOT" was quite useful in
-understanding some of the idiosyncracies of the Type N
-Talk device.
+## Arduino version
+
+The arduino version runs on an ATMEGA328 microncontroller and is
+expected to be connected to a real Votrax SC-01a. These are a little
+hard to find.
+
+The code implements the text-to-speech conversion rules, with a few
+additional features.
+
+### Extended escape sequences
+
+The votrax sequences (ESC followed by a low-ASCII code) are really
+hard to use, so I implemented some ascii tokens that work the same
+way. They use double curly braces at the start and stop.
+
+* {{psendon}} and {{psendoff}}. Default Off. If psend mode is on, then phonemes will be written to serial instead of spoken.
+* {{echoon}} and {{echooff}}. Default On. Turn character echo on/off.
+* {{capson}} and {{capsoff}}. Default Off. If caps mode is on, then any word that starts with two or more upper case letters will be spoken letter-by-letter.
+* {{timeron}} and {{timeroff}}. Default On. The timer will cause speech to be spoken if idle for approximately 4 seconds. Otherwise, waits for a CR.
+* {{reset}}. Resets the engine.
+* {{crlfon}} and {{crlfoff}}. Default off. If on, then outgoing CR will be followed by a LF.
+* {{ping}}. Responds with "pong".
+* {{daisy}}. Sings Daisy from the Hero Jr. 
+* {{volNN}}. Sets the amplifier volume. NN is a two-digit decimal number from 00 to 50.
+
+## Linux version
+
+The Linux version is solely for testing the engine. It doesn't
+produce any sound.
 
 `make test` should run the code through a series of tests that
 will verify it converts several known words correctly.
@@ -37,3 +61,11 @@ every possible phonetic rule in the software. At some point I may go
 back and just hit the simulated T n T with a full english dictionary
 and generate a test case for every english word, but for now this
 sampling will do.
+
+## Acknowledgements
+
+The original assembly source came from a disassembly that
+was done by Simon Rowe. Dr. Hugo Holden's article
+"Type 'N Talk meets the HERO Jr. ROBOT" was quite useful in
+understanding some of the idiosyncracies of the Type N
+Talk device.
